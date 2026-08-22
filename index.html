@@ -1,0 +1,2639 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>포트레이트 Ctrl+C 확장판</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;700&family=Noto+Sans:wght@300..900&family=Noto+Sans+KR:wght@300..900&family=Noto+Sans+JP:wght@300..900&family=Noto+Serif:wght@300..900&family=Noto+Serif+KR:wght@300..900&family=Noto+Serif+JP:wght@300..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+<style>
+    :root {
+        --accent: #ffffff;
+        --accent-rgb: 255, 255, 255;
+        --accent-text: #121212;
+    }
+
+    body.dark-mode {
+        --bg-deep: #121212;
+        --bg-card: #1e1e1e;
+        --bg-input: #121212;
+        --border-color: #333333;
+        --text-main: #f5f5f5;
+        --text-dim: #888888;
+        --shadow: rgba(0, 0, 0, 0.5);
+    }
+
+    body.light-mode {
+        --bg-deep: #f5f5f7;
+        --bg-card: #ffffff;
+        --bg-input: #f5f5f7;
+        --border-color: #e2e8f0;
+        --text-main: #1e293b;
+        --text-dim: #64748b;
+        --shadow: rgba(148, 163, 184, 0.15);
+    }
+
+    body.theme-mono {
+        --accent: var(--text-main);
+        --accent-rgb: 255, 255, 255;
+        --accent-text: var(--bg-card);
+    }
+    body.theme-blue { --accent: #3b82f6; --accent-rgb: 59, 130, 246; --accent-text: #ffffff; }
+    body.theme-green { --accent: #10b981; --accent-rgb: 16, 185, 129; --accent-text: #ffffff; }
+    body.theme-purple { --accent: #a855f7; --accent-rgb: 168, 85, 247; --accent-text: #ffffff; }
+    body.theme-red { --accent: #ef4444; --accent-rgb: 239, 68, 68; --accent-text: #ffffff; }
+
+    * { box-sizing: border-box; outline: none; }
+
+    body {
+        background-color: var(--bg-deep);
+        color: var(--text-main);
+        font-family: 'Urbanist', 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+
+    .container-box {
+        width: 100%;
+        max-width: 1240px;
+        position: relative;
+        transition: max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .app-header {
+        display: flex; justify-content: center; align-items: center;
+        margin-bottom: 35px; padding: 0; width: 100%;
+    }
+    .title-area { text-align: center; }
+    .title-area h1 { margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -1px; color: var(--text-main); }
+    .title-area h1 span { color: var(--accent); transition: color 0.3s; }
+    .title-area p { margin: 8px 0 0; font-size: 13px; color: var(--text-dim); font-weight: 400; }
+
+    .credits-link {
+        position: absolute; top: 12px; left: 0; color: var(--text-dim);
+        font-size: 13px; font-weight: 500; letter-spacing: 0.3px; text-decoration: none;
+        transition: color 0.2s ease; z-index: 10;
+    }
+    .credits-link:hover { color: var(--accent); }
+
+    .top-right-actions { position: absolute; top: 6px; right: 0; display: flex; gap: 8px; z-index: 10; }
+
+    .header-btn {
+        background: transparent; color: var(--text-dim); border: 1px solid var(--border-color);
+        padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 12px;
+        font-weight: 500; transition: all 0.3s ease; display: flex; align-items: center; gap: 5px;
+        font-family: inherit;
+    }
+    .header-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .header-btn.danger-hover:hover { border-color: #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+
+    .app-wrapper { width: 100%; display: grid; grid-template-columns: 350px 1fr; gap: 24px; align-items: start; }
+    .sidebar { display: flex; flex-direction: column; gap: 20px; }
+    .main-content { display: flex; flex-direction: column; gap: 20px; }
+
+    .card {
+        background: var(--bg-card); border: 1px solid var(--border-color);
+        border-radius: 20px; padding: 24px; box-shadow: 0 10px 25px -5px var(--shadow);
+        transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .card-title {
+        font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text-dim);
+        display: flex; align-items: center; gap: 8px;
+    }
+    .card-title.sub-labeled { margin-bottom: 6px; }
+    .card-sub-guide { font-size: 12px; color: var(--text-dim); margin-bottom: 14px; font-weight: 400; line-height: 1.4; }
+    .card-title i { color: var(--accent); transition: color 0.3s; }
+    .panel-hint {
+        font-size: 10.5px; line-height: 1.55; color: var(--text-dim);
+        font-weight: 400; margin: -4px 0 13px;
+    }
+    .panel-hint b { color: var(--text-main); font-weight: 700; }
+    .panel-hint i { color: var(--accent); }
+
+    .mode-selector {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+        background: var(--bg-input); padding: 4px; border-radius: 12px;
+        margin-bottom: 15px; border: 1px solid var(--border-color);
+    }
+    .mode-btn {
+        border: none; background: transparent; color: var(--text-dim); padding: 8px;
+        border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; font-family: inherit;
+        display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;
+    }
+    .mode-btn.active { background: var(--bg-card); color: var(--text-main); box-shadow: 0 2px 8px var(--shadow); }
+
+    input[type="text"], input[type="number"], select {
+        width: 100%; background: var(--bg-input); border: 1px solid var(--border-color);
+        border-radius: 12px; padding: 12px 16px; color: var(--text-main); font-family: inherit;
+        font-size: 14px; margin-bottom: 12px; transition: border-color 0.3s, background-color 0.3s, color 0.3s;
+    }
+    input[type="text"]:focus, input[type="number"]:focus, select:focus { border-color: var(--accent); }
+    input[type="color"].sheet-color {
+        width: 100%; height: 44px; background: var(--bg-input); border: 1px solid var(--border-color);
+        border-radius: 12px; padding: 4px; cursor: pointer; margin-bottom: 12px;
+    }
+    .mini-label { font-size: 13px; color: var(--text-dim); display: block; margin-bottom: 8px; }
+
+    .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    button.primary-btn {
+        width: 100%; background: var(--accent); color: var(--accent-text); border: none;
+        padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-family: inherit;
+    }
+    button.primary-btn:hover:not(:disabled) { filter: brightness(0.9); transform: translateY(-2px); }
+    button.primary-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    button.secondary-btn {
+        width: 100%; background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color);
+        padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-family: inherit;
+    }
+    button.secondary-btn:hover:not(:disabled) { border-color: var(--text-dim); }
+    button.secondary-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .backup-btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .backup-btn {
+        background: transparent; border: 1px dashed var(--border-color); color: var(--text-dim);
+        padding: 8px; border-radius: 10px; font-size: 12px; font-weight: 500; cursor: pointer;
+        transition: all 0.2s; font-family: inherit;
+    }
+    .backup-btn:hover { border-color: var(--accent); color: var(--text-main); }
+
+    .tool-btn {
+        background: transparent; border: 1px solid var(--text-dim); color: var(--text-dim);
+        padding: 4px 12px; border-radius: 8px; font-size: 12px; cursor: pointer;
+        transition: all 0.3s; font-family: inherit;
+    }
+    .tool-btn:hover { border-color: var(--text-main); color: var(--text-main); }
+    .tool-btn.accent { border-color: var(--accent); color: var(--accent); }
+    .tool-btn.accent:hover { background: rgba(var(--accent-rgb), 0.12); }
+
+    .theme-selector { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; }
+    .theme-dot {
+        width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+        border: 2px solid transparent; transition: transform 0.2s;
+    }
+    .theme-dot:hover { transform: scale(1.2); }
+    .theme-dot.active { border-color: var(--text-main); transform: scale(1.1); }
+
+    input[type="color"].custom-color-picker {
+        width: 24px; height: 24px; border: none; padding: 0; background: transparent;
+        cursor: pointer; border-radius: 50%; transition: transform 0.2s;
+    }
+    input[type="color"].custom-color-picker::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"].custom-color-picker::-webkit-color-swatch { border: 2px solid transparent; border-radius: 50%; }
+    input[type="color"].custom-color-picker:hover { transform: scale(1.1); }
+
+    .drop-area {
+        border: 2px dashed var(--border-color); border-radius: 16px; padding: 30px 20px;
+        text-align: center; cursor: pointer; color: var(--text-dim); transition: all 0.3s;
+    }
+    .drop-area:hover, .drop-area.drag-over { border-color: var(--accent); background: rgba(var(--accent-rgb), 0.05); color: var(--text-main); }
+    .drop-area i { font-size: 24px; margin-bottom: 10px; display: block; }
+
+    .preview-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+        gap: 12px; margin-top: 10px; max-height: 200px; overflow-y: auto;
+    }
+    .preview-wrapper { position: relative; width: 50px; }
+    .preview-item { width: 50px; height: 50px; border-radius: 10px; overflow: hidden; border: 2px solid transparent; cursor: pointer; }
+    .preview-item img { width: 100%; height: 100%; object-fit: cover; }
+    .preview-delete-btn {
+        position: absolute; top: -4px; right: -4px; width: 16px; height: 16px;
+        background: #64748b; border: 2px solid var(--bg-card); border-radius: 50%;
+        color: white; font-size: 8px; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; z-index: 10;
+    }
+    .preview-delete-btn:hover { background: #ef4444; }
+    .preview-label { font-size: 10px; color: var(--text-dim); text-align: center; margin-top: 4px; }
+
+    .cells-container {
+        display: grid; grid-template-columns: repeat(5, 1fr);
+        gap: 20px; padding: 10px; transition: grid-template-columns 0.4s ease;
+    }
+    .cell-card {
+        position: relative; width: 100%; background: var(--bg-card); border-radius: 18px;
+        overflow: hidden; cursor: grab; border: 1px solid var(--border-color);
+        box-shadow: 0 4px 6px -1px var(--shadow); transition: all 0.3s ease;
+    }
+    .cell-card:active { cursor: grabbing; }
+    .cell-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 10px 20px var(--shadow); }
+    .cell-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cell-card .label-overlay {
+        position: absolute; bottom: 6px; left: 0; width: 100%; padding: 0 4px;
+        color: #ffffff; font-size: 13px; text-align: center; font-weight: 700;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: transparent;
+        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000,
+                     -2px 0px 0 #000, 2px 0px 0 #000, 0px -2px 0 #000, 0px 2px 0 #000;
+    }
+    .cell-card .order-no {
+        position: absolute; top: 6px; left: 6px; min-width: 22px; height: 22px; padding: 0 6px;
+        background: rgba(0,0,0,0.6); border-radius: 11px; color: #fff; font-size: 11px; font-weight: 700;
+        display: flex; align-items: center; justify-content: center; z-index: 9;
+    }
+    .card-delete-btn {
+        position: absolute; top: 6px; right: 6px; width: 22px; height: 22px;
+        background: rgba(0, 0, 0, 0.6); border-radius: 50%; color: #ffffff;
+        display: flex; align-items: center; justify-content: center; cursor: pointer;
+        opacity: 0; transition: opacity 0.2s, background 0.2s; border: 1px solid rgba(255,255,255,0.2);
+        font-size: 10px; z-index: 10;
+    }
+    .card-delete-btn:hover { background: #ef4444; }
+    .cell-card:hover .card-delete-btn { opacity: 1; }
+
+    .empty-state { color: var(--text-dim); text-align: center; padding: 60px 20px; font-size: 14px; grid-column: 1 / -1; }
+    .empty-state i { font-size: 34px; display: block; margin-bottom: 14px; opacity: 0.4; }
+
+    .settings-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 14px; }
+    .settings-grid.two { grid-template-columns: repeat(2, 1fr); }
+    .divider { height: 1px; background: var(--border-color); margin: 6px 0 18px; }
+
+    .result-stage {
+        background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 16px;
+        padding: 18px; display: flex; justify-content: center; align-items: center;
+        overflow: auto; min-height: 180px;
+    }
+    .result-stage canvas { max-width: 100%; height: auto; border-radius: 6px; }
+    .result-stage .placeholder { color: var(--text-dim); font-size: 13px; text-align: center; }
+    .export-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+    .sheet-meta { font-size: 12px; color: var(--text-dim); margin-top: 12px; text-align: center; }
+
+    @media (max-width: 980px) {
+        .app-wrapper { grid-template-columns: 1fr; }
+        .top-right-actions, .credits-link { top: 2px; }
+        .settings-grid, .settings-grid.two { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+        .cells-container { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important; gap: 12px; }
+        .export-group { grid-template-columns: 1fr; }
+    }
+
+    .modal-overlay {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px);
+        z-index: 1000; justify-content: center; align-items: center;
+    }
+    .modal-content {
+        background: var(--bg-card); border: 1px solid var(--border-color);
+        padding: 30px; border-radius: 24px; width: 90%; max-width: 500px; text-align: center;
+    }
+    .image-crop-box {
+        background: #000; border-radius: 16px; overflow: hidden;
+        margin-bottom: 20px; height: 350px; display: flex; justify-content: center; align-items: center;
+    }
+    #image-to-crop { max-width: 100%; max-height: 100%; }
+    .modal-footer { display: flex; gap: 12px; }
+    .modal-btn { flex: 1; padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; }
+    .modal-btn.save { background: var(--accent); color: var(--accent-text); }
+    .modal-btn.cancel { background: #64748b; color: white; }
+
+    .ratio-chip-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+    .ratio-chip {
+        background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-dim);
+        padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+        transition: all 0.2s; font-family: inherit;
+    }
+    .ratio-chip.active { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+
+    .help-content-box {
+        text-align: left; margin-bottom: 24px; color: var(--text-main); font-size: 14px;
+        line-height: 1.6; max-height: 60vh; overflow-y: auto; padding-right: 10px;
+    }
+    .help-content-box h3 { color: var(--accent); font-size: 16px; margin-top: 20px; margin-bottom: 8px; }
+    .help-content-box h3:first-child { margin-top: 0; }
+    .help-content-box ul { padding-left: 20px; margin: 0; color: var(--text-dim); }
+    .help-content-box li { margin-bottom: 6px; }
+
+    #alert-box {
+        position: fixed; bottom: 30px; background: var(--text-main); color: var(--bg-card);
+        padding: 12px 24px; border-radius: 12px; font-weight: 600; display: none;
+        z-index: 2000; box-shadow: 0 10px 20px var(--shadow);
+    }
+
+    .manage-chk { accent-color: var(--accent); width: 16px; height: 16px; }
+
+    /* ===== 시트 편집기 ===== */
+    .stage-wrap {
+        background:
+            repeating-conic-gradient(rgba(255,255,255,.045) 0% 25%, transparent 0% 50%) 50% / 20px 20px,
+            var(--bg-input);
+        border: 1px solid var(--border-color); border-radius: 16px;
+        padding: 12px; display: flex; justify-content: center; overflow: hidden;
+    }
+    .stage-holder { position: relative; flex: none; }
+    .sheet-canvas {
+        position: absolute; top: 0; left: 0; transform-origin: top left;
+        overflow: hidden; border-radius: 4px;
+        font-family: 'Urbanist', 'Noto Sans KR', sans-serif;
+    }
+    .sheet-obj { position: absolute; }
+    .sheet-obj:not(.sheet-vertical) { cursor: move; }
+    .sheet-obj::after {
+        content: ''; position: absolute; inset: -5px; border-radius: 8px;
+        border: 1px dashed transparent; pointer-events: none; transition: border-color .15s;
+    }
+    .sheet-obj:hover::after { border-color: rgba(255,255,255,.28); }
+    .sheet-obj.obj-selected::after { border: 2px solid var(--accent); }
+    /* 저장할 때는 편집용 표시를 전부 지웁니다. 테두리를 투명하게만 두면
+       일부 환경에서 점선이 그대로 찍혀, 아예 만들지 않도록 content를 없앱니다.
+       입력 중이던 칸의 포커스 점선(outline)도 함께 지웁니다. */
+    .capturing .sheet-obj::after,
+    .capturing .sheet-obj::before { content: none !important; display: none !important; border: 0 !important; }
+    .capturing .obj-handle { display: none !important; }
+    .capturing [contenteditable]:empty::before { content: '' !important; }
+    .capturing .group-empty-note { display: none !important; }
+    .capturing, .capturing *, .capturing *::after, .capturing *::before { outline: none !important; }
+
+    [contenteditable]:empty::before { content: attr(data-ph); opacity: .35; }
+    .sheet-canvas [contenteditable] { outline: none; }
+    .sheet-canvas [contenteditable]:focus { outline: 1px dashed var(--accent); outline-offset: 3px; }
+
+    .sheet-vertical { display: block; pointer-events: none; }
+    .sheet-vertical .vt-inner {
+        position: absolute; left: 50%; white-space: nowrap; pointer-events: auto;
+        transform: translate(-50%, -50%) rotate(-90deg); transform-origin: center center;
+        font-weight: 700; letter-spacing: .16em; cursor: text; min-width: 40px; text-align: center;
+    }
+
+    .sheet-name { display: flex; flex-direction: column; gap: 2px; min-width: 60px; }
+    .sheet-name .nm-main { font-weight: 900; letter-spacing: -.01em; line-height: 1.15; cursor: text; }
+    .sheet-name .nm-sub { color: #8c8c8c; font-weight: 500; line-height: 1.3; cursor: text; }
+
+    .sheet-group { display: grid; }
+    .sheet-group.group-empty { display: block; }
+    .group-empty-note {
+        color: rgba(255,255,255,.4); font-size: 13px; border: 1px dashed rgba(255,255,255,.25);
+        border-radius: 10px; padding: 26px 34px; white-space: nowrap;
+    }
+    .sheet-cell { position: relative; overflow: hidden; flex: none; }
+    .sheet-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cell-label { position: absolute; white-space: nowrap; line-height: 1.2; }
+    .cell-label { left: 50%; bottom: 7px; transform: translateX(-50%); }
+    /* html2canvas는 -webkit-text-stroke를 렌더하지 못하므로, 포트레이트 앱과 같은
+       다방향 그림자 방식으로 테두리를 냅니다. 저장 결과에서도 그대로 나옵니다. */
+    .cell-label.ls-outline {
+        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000,
+                     -2px 0 0 #000, 2px 0 0 #000, 0 -2px 0 #000, 0 2px 0 #000;
+    }
+    .cell-label.ls-pill { background: rgba(0,0,0,.62); padding: 3px 9px; border-radius: 999px; }
+
+    .sheet-stats { display: grid; gap: 6px; }
+    .stat-box {
+        border-radius: 8px; padding: 7px 9px; display: flex; align-items: baseline;
+        justify-content: space-between; gap: 8px; line-height: 1.2;
+    }
+    .stat-box .stat-name { font-weight: 500; opacity: .82; white-space: nowrap; }
+    .stat-box .stat-name b { font-weight: 800; opacity: 1; }
+    .stat-box .stat-val { font-weight: 900; min-width: 26px; text-align: right; cursor: text; }
+
+    .sheet-sticker img { width: 100%; height: auto; display: block; pointer-events: none; }
+    .sk-resize {
+        position: absolute; right: -7px; bottom: -7px; width: 14px; height: 14px;
+        background: var(--accent); border: 2px solid var(--bg-card); border-radius: 3px;
+        cursor: nwse-resize; z-index: 3;
+    }
+    .grp-resize {
+        position: absolute; right: -9px; bottom: -9px; width: 18px; height: 18px;
+        background: var(--accent); border: 2px solid var(--bg-card); border-radius: 4px;
+        cursor: nwse-resize; z-index: 5; opacity: 0; transition: opacity .15s;
+    }
+    .sheet-group:hover .grp-resize, .sheet-group.obj-selected .grp-resize { opacity: 1; }
+    .grp-cols {
+        position: absolute; right: -9px; top: 50%; margin-top: -14px; width: 14px; height: 28px;
+        background: var(--accent); border: 2px solid var(--bg-card); border-radius: 4px;
+        cursor: ew-resize; z-index: 5; opacity: 0; transition: opacity .15s;
+    }
+    .sheet-group:hover .grp-cols, .sheet-group.obj-selected .grp-cols { opacity: 1; }
+
+    .seg-row { display: flex; gap: 6px; margin-bottom: 12px; }
+    .seg-btn {
+        flex: 1; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-dim);
+        border-radius: 10px; padding: 9px 8px; font-size: 12px; font-weight: 600;
+        cursor: pointer; font-family: inherit;
+    }
+    .seg-btn:hover { border-color: var(--text-dim); color: var(--text-main); }
+    .seg-btn.active { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+
+    /* 개체 패널 버튼 — 테마 토큰만 사용해 다크/라이트·테마 색을 그대로 따라갑니다. */
+    .obj-btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .obj-btn {
+        display: flex; align-items: center; justify-content: center; gap: 6px;
+        background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main);
+        border-radius: 10px; padding: 10px 8px; font-size: 12px; font-weight: 600;
+        cursor: pointer; font-family: inherit; transition: all .2s; white-space: nowrap;
+    }
+    .obj-btn i { color: var(--accent); transition: color .2s; }
+    .obj-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .obj-btn.danger { color: var(--text-dim); }
+    .obj-btn.danger i { color: var(--text-dim); }
+    .obj-btn.danger:hover { background: #ef4444; border-color: #ef4444; color: #fff; }
+    .obj-btn.danger:hover i { color: #fff; }
+
+    .grad-preview {
+        width: 100%; height: 40px; border-radius: 10px; border: 1px solid var(--border-color);
+        margin-bottom: 12px;
+    }
+    .angle-row { display: flex; align-items: center; gap: 8px; }
+    .angle-row input[type="range"] { flex: 1; }
+    .angle-presets { display: flex; gap: 6px; margin-top: 8px; }
+    .mini-chip {
+        flex: 1; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-dim);
+        border-radius: 8px; padding: 6px 0; font-size: 13px; cursor: pointer; font-family: inherit; line-height: 1;
+    }
+    .mini-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* 개체 설정은 캔버스를 보면서 만지는 곳이라, 스크롤을 따라오게 둡니다. */
+    @media (min-width: 981px) {
+        .sidebar { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; padding-right: 4px; }
+        .sidebar::-webkit-scrollbar { width: 5px; }
+        .sidebar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+    }
+    .sidebar .settings-grid,
+    .sidebar .settings-grid.two { grid-template-columns: 1fr 1fr; }
+    .sidebar .obj-tab { padding: 7px 9px; font-size: 11.5px; }
+
+    .obj-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .obj-tab {
+        background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-dim);
+        border-radius: 10px; padding: 8px 12px; font-size: 12px; font-weight: 600;
+        cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px;
+    }
+    .obj-tab:hover { border-color: var(--text-dim); color: var(--text-main); }
+    .obj-tab.active { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+    .obj-panel[hidden] { display: none; }
+    .range-val { font-size: 11px; color: var(--text-dim); font-weight: 700; }
+    .obj-panel input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+    .cell-card .vis-toggle {
+        position: absolute; top: 6px; right: 32px; width: 22px; height: 22px;
+        background: rgba(0,0,0,.6); border-radius: 50%; color: #fff; border: 1px solid rgba(255,255,255,.2);
+        display: flex; align-items: center; justify-content: center; cursor: pointer;
+        font-size: 10px; z-index: 10; opacity: 0; transition: opacity .2s;
+    }
+    .cell-card:hover .vis-toggle { opacity: 1; }
+    .cell-card .vis-toggle.on { background: var(--accent); color: var(--accent-text); opacity: 1; }
+    .cell-card.cell-hidden { opacity: .38; }
+    .cell-card.cell-hidden img { filter: grayscale(1); }
+
+
+    .autosave-row {
+        display: flex; align-items: center; gap: 12px;
+        background: var(--bg-input); border: 1px solid var(--border-color);
+        border-radius: 14px; padding: 12px 14px; margin-bottom: 18px;
+    }
+    .switch { position: relative; display: inline-block; width: 40px; height: 22px; flex: none; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch .slider {
+        position: absolute; cursor: pointer; inset: 0; background: var(--border-color);
+        border-radius: 22px; transition: background-color 0.25s;
+    }
+    .switch .slider::before {
+        content: ""; position: absolute; height: 16px; width: 16px; left: 3px; top: 3px;
+        background: var(--bg-card); border-radius: 50%; transition: transform 0.25s;
+    }
+    .switch input:checked + .slider { background: var(--accent); }
+    .switch input:checked + .slider::before { transform: translateX(18px); }
+    .switch input:focus-visible + .slider { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .dot-pulse {
+        display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+        background: var(--accent); margin-right: 5px; vertical-align: middle;
+    }
+</style>
+</head>
+<body class="theme-mono dark-mode">
+
+<div class="container-box" id="main-container">
+
+    <span class="credits-link">@sa_se372</span>
+
+    <div class="top-right-actions">
+        <button class="header-btn" onclick="openHelpModal()"><i class="fa-solid fa-circle-question"></i> 도움말</button>
+        <button class="header-btn danger-hover" onclick="resetAll()"><i class="fa-solid fa-rotate-right"></i> 초기화</button>
+    </div>
+
+    <div class="app-header">
+        <div class="title-area">
+            <h1>포트레이트 <span>시트 제작소</span></h1>
+            <p>포트레이트 Ctrl+C 확장판</p>
+        </div>
+    </div>
+
+    <div class="app-wrapper">
+
+        <!-- ================= SIDEBAR ================= -->
+        <div class="sidebar">
+
+            <div class="card">
+                <div class="card-title"><i class="fa-solid fa-circle-half-stroke"></i> 화면 모드</div>
+                <div class="mode-selector">
+                    <button class="mode-btn" id="btn-light" onclick="setScreenMode('light')"><i class="fa-solid fa-sun"></i> 라이트</button>
+                    <button class="mode-btn active" id="btn-dark" onclick="setScreenMode('dark')"><i class="fa-solid fa-moon"></i> 다크</button>
+                </div>
+
+                <div class="card-title"><i class="fa-solid fa-palette"></i> 테마 컬러 설정</div>
+                <div class="theme-selector" id="theme-selector-container">
+                    <div class="theme-dot active" data-theme="mono" style="background-color: #a1a1aa;" onclick="setTheme('mono', this)"></div>
+                    <div class="theme-dot" data-theme="blue" style="background-color: #3b82f6;" onclick="setTheme('blue', this)"></div>
+                    <div class="theme-dot" data-theme="green" style="background-color: #10b981;" onclick="setTheme('green', this)"></div>
+                    <div class="theme-dot" data-theme="purple" style="background-color: #a855f7;" onclick="setTheme('purple', this)"></div>
+                    <div class="theme-dot" data-theme="red" style="background-color: #ef4444;" onclick="setTheme('red', this)"></div>
+                    <i class="fa-solid fa-angle-right" style="color: var(--border-color); font-size: 14px; margin: 0 4px;"></i>
+                    <input type="color" class="custom-color-picker" id="custom-theme-color" oninput="setCustomTheme(this.value)" value="#ff7700" title="직접 색상 선택">
+                </div>
+
+                <div class="card-title"><i class="fa-solid fa-folder-open"></i> 캐릭터 데이터베이스</div>
+
+                <div style="margin-bottom: 18px;">
+                    <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim); margin-bottom:6px; font-weight:600;">
+                        <span><i class="fa-solid fa-database"></i> 전용 저장소</span>
+                        <span id="storage-text">0.00MB</span>
+                    </div>
+                    <div style="width:100%; height:8px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:4px; overflow:hidden;">
+                        <div id="storage-bar-fill" style="height:100%; width:0%; background:var(--accent); transition:width 0.4s, background-color 0.4s;"></div>
+                    </div>
+                    <div id="storage-note" style="font-size:11px; color:var(--text-dim); margin-top:6px; line-height:1.5;"></div>
+                    <div id="persist-row" style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                        <span id="persist-status" style="font-size:11px; color:var(--text-dim); flex:1; line-height:1.4;"></span>
+                        <button class="tool-btn" id="persist-btn" onclick="requestPersistence()" style="display:none; white-space:nowrap;"><i class="fa-solid fa-lock"></i> 영구 보관</button>
+                    </div>
+                </div>
+
+                <div class="autosave-row">
+                    <label class="switch">
+                        <input type="checkbox" id="autosave-toggle" checked onchange="toggleAutosave()">
+                        <span class="slider"></span>
+                    </label>
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-size:13px; font-weight:600; color:var(--text-main);">자동 저장</div>
+                        <div id="autosave-status" style="font-size:11px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">대기 중</div>
+                    </div>
+                    <button class="tool-btn" onclick="openRestoreModal()" title="마지막 자동 저장으로 되돌리기"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                </div>
+
+                <input type="text" id="character-name" placeholder="캐릭터 이름 입력">
+                <div class="btn-group">
+                    <button class="secondary-btn" onclick="newCharacter()"><i class="fa-solid fa-plus"></i> 새로 만들기</button>
+                    <button class="primary-btn" onclick="saveCharacter()"><i class="fa-solid fa-floppy-disk"></i> 저장하기</button>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <select id="saved-character-list" onchange="loadCharacter()">
+                        <option value="">-- 캐릭터 불러오기 --</option>
+                    </select>
+                    <button class="secondary-btn" style="margin-top: 8px; padding: 10px; font-size: 13px;" onclick="openManageModal()"><i class="fa-solid fa-list-check"></i> 캐릭터 일괄 관리 (백업/삭제)</button>
+                </div>
+
+                <div class="backup-btn-group">
+                    <button class="backup-btn" onclick="exportDatabase()"><i class="fa-solid fa-file-export"></i> 전체 DB 백업 (.json)</button>
+                    <button class="backup-btn" onclick="document.getElementById('import-file').click()"><i class="fa-solid fa-file-import"></i> 복구 (.json)</button>
+                </div>
+                <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importDatabase(this)">
+            </div>
+
+            <div class="card">
+                <div class="card-title"><i class="fa-solid fa-gear"></i> 설정 및 업로드</div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px;">
+                    <div>
+                        <label class="mini-label">이름 생성 방식</label>
+                        <select id="label-method" onchange="reapplyLabels()" style="margin-bottom: 0;">
+                            <option value="filename">파일명 그대로</option>
+                            <option value="at_filename">앞에 @ 추가</option>
+                            <option value="number">순번 (01, 02…)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mini-label">셀 비율</label>
+                        <select id="crop-ratio" onchange="changeCropRatio()" style="margin-bottom: 0;">
+                            <option value="1:1">1:1 정사각</option>
+                            <option value="4:5">4:5 세로</option>
+                            <option value="5:4">5:4 가로</option>
+                            <option value="free">자유</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+                    <div>
+                        <label class="mini-label">저장 화질</label>
+                        <select id="quality-level" style="margin-bottom: 0;">
+                            <option value="320">가볍게 (320px)</option>
+                            <option value="512" selected>권장 (512px)</option>
+                            <option value="768">고화질 (768px)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mini-label">1열 표시 개수</label>
+                        <select id="column-count" onchange="changeColumnCount()" style="margin-bottom: 0;">
+                            <option value="4">4개</option>
+                            <option value="5" selected>5개</option>
+                            <option value="6">6개</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="drop-area" id="drop-area" onclick="document.getElementById('img-input').click()" style="margin-top: 18px;">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>파일을 끌어다 놓거나 클릭하여 업로드</span>
+                </div>
+                <input type="file" id="img-input" accept="image/*" multiple style="display: none;">
+
+                <div class="card-title sub-labeled" style="margin-top: 20px; font-size: 14px;"><i class="fa-solid fa-list-ol"></i> 업로드 대기열</div>
+                <div class="card-sub-guide">대기열의 이미지를 눌러 다시 크롭합니다.</div>
+                <div class="preview-grid" id="preview-area"></div>
+            </div>
+
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-sliders"></i> 개체 설정</div>
+
+            <div class="obj-tabs" id="obj-tabs">
+                <button class="obj-tab active" data-obj="canvas" onclick="selectObject('canvas')"><i class="fa-solid fa-crop-simple"></i> 캔버스</button>
+                <button class="obj-tab" data-obj="group" onclick="selectObject('group')"><i class="fa-solid fa-table-cells"></i> 표정 그룹</button>
+                <button class="obj-tab" data-obj="name" onclick="selectObject('name')"><i class="fa-solid fa-font"></i> 이름</button>
+                <button class="obj-tab" data-obj="vertical" onclick="selectObject('vertical')"><i class="fa-solid fa-text-height"></i> 세로 텍스트</button>
+                <button class="obj-tab" data-obj="stats" onclick="selectObject('stats')"><i class="fa-solid fa-dice-d20"></i> 특성치</button>
+                <button class="obj-tab" data-obj="sticker" onclick="selectObject('sticker')"><i class="fa-solid fa-person"></i> 스티커</button>
+            </div>
+
+            <!-- 캔버스 -->
+            <div class="obj-panel" data-panel="canvas">
+                <div class="settings-grid">
+                    <div><label class="mini-label">가로 (px)</label><input type="number" id="cv-w" value="1200" min="200" max="4000" step="10"></div>
+                    <div><label class="mini-label">세로 (px)</label><input type="number" id="cv-h" value="800" min="200" max="4000" step="10"></div>
+                </div>
+                <label class="mini-label">배경</label>
+                <div class="seg-row" id="cv-bgmode-row">
+                    <button class="seg-btn active" data-mode="solid" onclick="setBgMode('solid')">단색</button>
+                    <button class="seg-btn" data-mode="gradient" onclick="setBgMode('gradient')">그라데이션</button>
+                </div>
+
+                <div class="settings-grid">
+                    <div><label class="mini-label" id="cv-bg-label">배경색</label><input type="color" class="sheet-color" id="cv-bg" value="#1e1e1e"></div>
+                    <div id="cv-bg2-field" hidden><label class="mini-label">끝 색</label><input type="color" class="sheet-color" id="cv-bg2" value="#3a3a3a"></div>
+                </div>
+
+                <div id="cv-grad-box" hidden>
+                    <div class="grad-preview" id="cv-grad-preview"></div>
+                    <div class="field">
+                        <label class="mini-label">축 (각도)</label>
+                        <div class="angle-row">
+                            <input type="range" id="cv-angle" min="0" max="360" step="5" value="160">
+                            <span class="range-val" id="cv-angle-val">160°</span>
+                        </div>
+                        <div class="angle-presets">
+                            <button class="mini-chip" onclick="setBgAngle(0)" title="아래에서 위로">&uarr;</button>
+                            <button class="mini-chip" onclick="setBgAngle(90)" title="왼쪽에서 오른쪽">&rarr;</button>
+                            <button class="mini-chip" onclick="setBgAngle(180)" title="위에서 아래로">&darr;</button>
+                            <button class="mini-chip" onclick="setBgAngle(270)" title="오른쪽에서 왼쪽">&larr;</button>
+                            <button class="mini-chip" onclick="setBgAngle(135)" title="대각선">&#8600;</button>
+                        </div>
+                    </div>
+                    <div class="settings-grid">
+                        <div><label class="mini-label">시작 지점</label><input type="range" id="cv-stop1" min="0" max="100" value="0"><span class="range-val" id="cv-stop1-val">0%</span></div>
+                        <div><label class="mini-label">끝 지점</label><input type="range" id="cv-stop2" min="0" max="100" value="100"><span class="range-val" id="cv-stop2-val">100%</span></div>
+                    </div>
+                    <p class="panel-hint" style="margin:2px 0 12px;">두 지점을 가깝게 붙이면 경계가 뚜렷해지고, 멀리 벌리면 부드럽게 번집니다.</p>
+                </div>
+
+                <div class="field">
+                    <label class="mini-label">서체 (시트 전체)</label>
+                    <select id="cv-font">
+                        <option value="sans">고딕 (Noto Sans)</option>
+                        <option value="serif">명조 (Noto Serif)</option>
+                    </select>
+                </div>
+                <button class="secondary-btn" onclick="pullThemeColors()"><i class="fa-solid fa-eye-dropper"></i> 현재 테마 색 가져오기</button>
+            </div>
+
+            <!-- 표정 그룹 -->
+            <div class="obj-panel" data-panel="group" hidden>
+                <p class="panel-hint">크기와 열 수는 캔버스에서 직접 조절합니다 &mdash; 그룹 모서리를 끌면 <b>표정 크기</b>, 오른쪽 가운데를 끌면 <b>열 수</b>가 바뀝니다. 넣을 컷은 표정 카드의 <i class="fa-solid fa-eye"></i> 로 고릅니다.</p>
+
+                <label class="mini-label">칸 모양</label>
+                <div class="seg-row" id="gp-mode-row">
+                    <button class="seg-btn active" data-mode="fill" onclick="setCellMode('fill')">배경 채움</button>
+                    <button class="seg-btn" data-mode="stroke" onclick="setCellMode('stroke')">획만</button>
+                </div>
+
+                <div class="settings-grid">
+                    <div id="gp-bg-field"><label class="mini-label">칸 배경색</label><input type="color" class="sheet-color" id="gp-cellbg" value="#000000"></div>
+                    <div><label class="mini-label">획 색</label><input type="color" class="sheet-color" id="gp-strokecolor" value="#f5f5f5"></div>
+                </div>
+                <div class="settings-grid">
+                    <div><label class="mini-label">획 두께</label><input type="range" id="gp-strokew" min="0" max="10" value="0"><span class="range-val" id="gp-strokew-val">0px</span></div>
+                    <div><label class="mini-label">모서리</label><input type="range" id="gp-radius" min="0" max="80" value="12"><span class="range-val" id="gp-radius-val">12px</span></div>
+                </div>
+                <div class="settings-grid">
+                    <div><label class="mini-label">칸 사이 간격</label><input type="range" id="gp-gap" min="0" max="60" value="10"><span class="range-val" id="gp-gap-val">10px</span></div>
+                    <div><label class="mini-label">투명도</label><input type="range" id="gp-opacity" min="10" max="100" value="100"><span class="range-val" id="gp-opacity-val">100%</span></div>
+                </div>
+
+                <div class="divider"></div>
+                <label class="checkline"><input type="checkbox" id="gp-labelshow" checked> 표정 이름 표시</label>
+                <div class="settings-grid">
+                    <div>
+                        <label class="mini-label">이름 스타일</label>
+                        <select id="gp-labelstyle">
+                            <option value="outline">폰트 + 획</option>
+                            <option value="pill">박스</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mini-label">두께</label>
+                        <select id="gp-labelweight" class="weight-select"></select>
+                    </div>
+                </div>
+                <div class="settings-grid">
+                    <div><label class="mini-label">이름 크기 (px)</label><input type="number" id="gp-labelsize" value="14" min="6" max="48"></div>
+                    <div><label class="mini-label">이름 색</label><input type="color" class="sheet-color" id="gp-labelcolor" value="#ffffff"></div>
+                </div>
+            </div>
+
+            <!-- 이름 -->
+            <div class="obj-panel" data-panel="name" hidden>
+                <label class="checkline"><input type="checkbox" id="nm-show" checked> 시트에 이름 표시</label>
+                <p class="panel-hint">캔버스 위의 글자를 직접 클릭해서 고칠 수도 있어요.</p>
+                <div class="settings-grid two">
+                    <div><label class="mini-label">캐릭터 이름</label><input type="text" id="nm-text" placeholder="예: 무지"></div>
+                    <div><label class="mini-label">원문 이름 (아래 작은 글씨)</label><input type="text" id="nm-sub" placeholder="예: Muji"></div>
+                </div>
+                <div class="settings-grid">
+                    <div><label class="mini-label">이름 크기 (px)</label><input type="number" id="nm-size" value="34" min="8" max="140"></div>
+                    <div><label class="mini-label">원문 크기 (px)</label><input type="number" id="nm-subsize" value="15" min="6" max="80"></div>
+                </div>
+                <div class="settings-grid">
+                    <div><label class="mini-label">이름 두께</label><select id="nm-weight" class="weight-select"></select></div>
+                    <div><label class="mini-label">원문 두께</label><select id="nm-subweight" class="weight-select"></select></div>
+                </div>
+                <div class="settings-grid">
+                    <div><label class="mini-label">이름 색</label><input type="color" class="sheet-color" id="nm-color" value="#f5f5f5"></div>
+                    <div><label class="mini-label">원문 색</label><input type="color" class="sheet-color" id="nm-subcolor" value="#8c8c8c"></div>
+                </div>
+            </div>
+
+            <!-- 세로 텍스트 -->
+            <div class="obj-panel" data-panel="vertical" hidden>
+                <label class="checkline"><input type="checkbox" id="vt-show" checked> 왼쪽 끝에 세로 텍스트 표시</label>
+                <p class="panel-hint">가로 위치는 왼쪽 끝에 고정됩니다. 시나리오 제목 등을 적어보세요.</p>
+                <div class="field"><label class="mini-label">내용</label><input type="text" id="vt-text" placeholder="예: 시나리오 제목"></div>
+                <div class="settings-grid">
+                    <div><label class="mini-label">크기 (px)</label><input type="number" id="vt-size" value="20" min="8" max="80"></div>
+                    <div><label class="mini-label">두께</label><select id="vt-weight" class="weight-select"></select></div>
+                </div>
+                <div class="settings-grid">
+                    <div><label class="mini-label">색</label><input type="color" class="sheet-color" id="vt-color" value="#f5f5f5"></div>
+                    <div><label class="mini-label">세로 위치</label><input type="range" id="vt-pos" min="0" max="100" value="50"><span class="range-val" id="vt-pos-val">50%</span></div>
+                </div>
+            </div>
+
+            <!-- COC 특성치 -->
+            <div class="obj-panel" data-panel="stats" hidden>
+                <label class="checkline"><input type="checkbox" id="st-show"> 특성치 표 표시</label>
+                <p class="panel-hint">값은 캔버스 위에서 직접 입력합니다. 비워두면 &mdash; 로 보입니다.</p>
+                <div class="settings-grid">
+                    <div>
+                        <label class="mini-label">이름 표기</label>
+                        <select id="st-mode">
+                            <option value="both">한글 + 영문</option>
+                            <option value="en">영문만</option>
+                            <option value="ko">한글만</option>
+                        </select>
+                    </div>
+                    <div><label class="mini-label">글씨 크기 (px)</label><input type="number" id="st-size" value="13" min="6" max="40"></div>
+                    <div><label class="mini-label">값 두께</label><select id="st-weight" class="weight-select"></select></div>
+                </div>
+                <div class="settings-grid">
+                    <div><label class="mini-label">글씨 색</label><input type="color" class="sheet-color" id="st-color" value="#f5f5f5"></div>
+                    <div><label class="mini-label">칸 배경</label><input type="color" class="sheet-color" id="st-bg" value="#000000"></div>
+                    <div><label class="mini-label">배경 진하기</label><input type="range" id="st-bgalpha" min="0" max="100" value="28"><span class="range-val" id="st-bgalpha-val">28%</span></div>
+                    <div><label class="mini-label">칸 너비 (px)</label><input type="number" id="st-cellw" value="104" min="50" max="260"></div>
+                </div>
+            </div>
+
+            <!-- 스티커 -->
+            <div class="obj-panel" data-panel="sticker" hidden>
+                <div id="sticker-empty" class="panel-hint">아직 스티커가 없습니다. 위의 <b>스티커 추가</b>로 전신·반신 이미지를 올려보세요.</div>
+                <div id="sticker-controls" hidden>
+                    <div class="field"><label class="mini-label">선택한 스티커</label><select id="sk-select" onchange="selectStickerById(this.value)"></select></div>
+                    <div class="settings-grid">
+                        <div><label class="mini-label">너비 (px)</label><input type="number" id="sk-w" value="300" min="20" max="3000"></div>
+                        <div><label class="mini-label">회전 (°)</label><input type="number" id="sk-angle" value="0" min="-180" max="180"></div>
+                        <div><label class="mini-label">투명도</label><input type="range" id="sk-opacity" min="5" max="100" value="100"><span class="range-val" id="sk-opacity-val">100%</span></div>
+                    </div>
+                    <label class="mini-label" style="margin-top:6px;">쌓임 순서</label>
+                    <div class="obj-btn-grid">
+                        <button class="obj-btn" onclick="stickerLayer('front')"><i class="fa-solid fa-arrow-up"></i> 맨 앞으로</button>
+                        <button class="obj-btn" onclick="stickerLayer('back')"><i class="fa-solid fa-arrow-down"></i> 맨 뒤로</button>
+                        <button class="obj-btn" onclick="stickerLayer('behind-group')"><i class="fa-solid fa-layer-group"></i> 표정 뒤로</button>
+                        <button class="obj-btn danger" onclick="deleteSticker()"><i class="fa-solid fa-trash-can"></i> 삭제</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </div>
+
+        <!-- ================= MAIN ================= -->
+        <div class="main-content">
+
+            <div class="card" style="min-height: 420px;">
+                <div class="card-title" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                    <span><i class="fa-solid fa-grip"></i> 표정 컷 <span id="cell-count-badge" style="color: var(--accent); font-weight:700;">0</span></span>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="tool-btn" onclick="sortCellsByName()"><i class="fa-solid fa-arrow-down-a-z"></i> 이름순 정렬</button>
+                        <button class="tool-btn" id="edit-mode-btn" onclick="toggleEditMode()"><i class="fa-solid fa-pen"></i> 이름 수정 모드</button>
+                        <button class="tool-btn accent" onclick="applyGlobalCrop()"><i class="fa-solid fa-crop-simple"></i> 일괄 크롭 적용</button>
+                    </div>
+                </div>
+                <div class="cells-container" id="cell-container"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                    <span><i class="fa-solid fa-object-group"></i> 시트 캔버스</span>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <label class="tool-btn" style="margin:0;"><i class="fa-solid fa-person"></i> 스티커 추가<input type="file" accept="image/*" multiple style="display:none;" onchange="addStickers(event)"></label>
+                        <button class="tool-btn" onclick="fitCanvasToContent()"><i class="fa-solid fa-compress"></i> 여백 맞추기</button>
+                        <button class="tool-btn accent" onclick="resetLayout()"><i class="fa-solid fa-rotate"></i> 배치 초기화</button>
+                    </div>
+                </div>
+                <p class="panel-hint">개체를 드래그해 옮기고, 클릭하면 아래에서 세부 설정을 바꿀 수 있어요.</p>
+
+                <div class="stage-wrap" id="stage-wrap">
+                    <div class="stage-holder" id="stage-holder">
+                        <div class="sheet-canvas" id="sheet-canvas"></div>
+                    </div>
+                </div>
+
+                <div class="export-group">
+                    <button class="secondary-btn" onclick="exportPNG(1)" data-export><i class="fa-solid fa-download"></i> PNG 1×</button>
+                    <button class="secondary-btn" onclick="exportPNG(2)" data-export><i class="fa-solid fa-download"></i> PNG 2×</button>
+                    <button class="primary-btn" onclick="exportPNG(3)" data-export><i class="fa-solid fa-download"></i> PNG 3×</button>
+                </div>
+                <div class="sheet-meta" id="sheet-meta"></div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<div id="alert-box">알림</div>
+
+<!-- 웰컴 오버레이 -->
+<div id="welcome-overlay" class="modal-overlay" style="display: flex;">
+    <div class="modal-content" style="max-width: 550px;">
+        <div class="card-title" style="justify-content: center; font-size: 22px; margin-bottom: 20px;">
+            <i class="fa-solid fa-book-open"></i> 시트 제작소 시작하기
+        </div>
+        <div class="help-content-box" style="padding: 0 10px;" id="welcome-help"></div>
+        <div class="modal-footer">
+            <button class="modal-btn save" onclick="document.getElementById('welcome-overlay').style.display='none'">확인 후 시작하기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 크롭 편집 모달 -->
+<div id="cropper-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="card-title"><i class="fa-solid fa-crop"></i> 정밀 크롭 편집 <span style="font-size: 12px; font-weight: normal; margin-left: auto;">Enter: 저장 | ESC: 취소</span></div>
+        <div class="image-crop-box"><img id="image-to-crop" src="" alt="크롭 편집기"></div>
+        <div class="ratio-chip-row" id="ratio-chip-row">
+            <button class="ratio-chip active" data-ratio="1:1" onclick="setCropperRatio('1:1')">1:1</button>
+            <button class="ratio-chip" data-ratio="4:5" onclick="setCropperRatio('4:5')">4:5</button>
+            <button class="ratio-chip" data-ratio="5:4" onclick="setCropperRatio('5:4')">5:4</button>
+            <button class="ratio-chip" data-ratio="free" onclick="setCropperRatio('free')">자유</button>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn cancel" onclick="closeCropper()">취소</button>
+            <button class="modal-btn save" onclick="saveCrop()">크롭 저장</button>
+        </div>
+    </div>
+</div>
+
+<!-- 도움말 모달 -->
+<div id="help-modal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 550px;">
+        <div class="card-title"><i class="fa-solid fa-circle-question"></i> 사용 방법 안내</div>
+        <div class="help-content-box" style="padding: 0 10px;" id="help-body"></div>
+        <div class="modal-footer">
+            <button class="modal-btn save" onclick="closeHelpModal()">확인 및 닫기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 자동 저장 복구 모달 -->
+<div id="restore-modal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 460px;">
+        <div class="card-title" style="justify-content:center;"><i class="fa-solid fa-clock-rotate-left"></i> 자동 저장된 작업</div>
+        <div id="restore-body" style="color: var(--text-dim); font-size: 14px; line-height: 1.6; margin-bottom: 24px;"></div>
+        <div class="modal-footer">
+            <button class="modal-btn cancel" onclick="dismissRestore()">아니요, 새로 시작</button>
+            <button class="modal-btn save" onclick="applyRestore()">이어서 작업하기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 캐릭터 일괄 관리 모달 -->
+<div id="manage-modal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="card-title"><i class="fa-solid fa-list-check"></i> 캐릭터 일괄 관리</div>
+        <div style="text-align: left; margin-bottom: 10px;">
+            <input type="checkbox" id="manage-select-all" class="manage-chk" onchange="toggleSelectAllManage(this.checked)" style="vertical-align: middle;">
+            <label for="manage-select-all" style="color: var(--text-main); font-weight: 600; font-size: 14px; cursor: pointer;">전체 선택</label>
+        </div>
+        <div id="manage-list" style="max-height: 300px; overflow-y: auto; text-align: left; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 15px; margin-bottom: 20px; background: var(--bg-input);"></div>
+        <div class="modal-footer">
+            <button class="modal-btn cancel" onclick="document.getElementById('manage-modal').style.display='none'">닫기</button>
+            <button class="modal-btn" style="background: #3b82f6; color: white;" onclick="exportSelectedCharacters()">선택 백업</button>
+            <button class="modal-btn" style="background: #ef4444; color: white;" onclick="deleteSelectedCharacters()">선택 삭제</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script>
+    /* ============ 전용 저장소 (IndexedDB) ============
+       localStorage는 도메인 전체가 5MB를 나눠 쓰기 때문에, 같은 계정의 다른 페이지와
+       공간이 얽힙니다. 시트 제작소는 전용 DB를 따로 열어 그 영향에서 벗어납니다.
+       localStorage에는 테마·모드 같은 수십 바이트짜리 화면 설정만 남깁니다.        */
+    const LEGACY_PREFIX = 'sheet_';
+    const DB_NAME = 'StandingSheetMakerDB';
+    const DB_VER = 1;
+    const S_CHAR = 'characters';
+    const S_DRAFT = 'draft';
+    const SOFT_BUDGET = 50 * 1024 * 1024;
+
+    let dbPromise = null;
+    function openDB() {
+        if (dbPromise) return dbPromise;
+        dbPromise = new Promise((resolve, reject) => {
+            const req = indexedDB.open(DB_NAME, DB_VER);
+            req.onupgradeneeded = e => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(S_CHAR)) db.createObjectStore(S_CHAR, { keyPath: 'name' });
+                if (!db.objectStoreNames.contains(S_DRAFT)) db.createObjectStore(S_DRAFT, { keyPath: 'id' });
+            };
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+        return dbPromise;
+    }
+
+    function idbRun(storeName, mode, fn) {
+        return openDB().then(db => new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, mode);
+            const request = fn(tx.objectStore(storeName));
+            tx.oncomplete = () => resolve(request ? request.result : undefined);
+            tx.onerror = () => reject(tx.error);
+            tx.onabort = () => reject(tx.error);
+        }));
+    }
+    const idbPut = (store, value) => idbRun(store, 'readwrite', s => s.put(value));
+    const idbGet = (store, key) => idbRun(store, 'readonly', s => s.get(key));
+    const idbDel = (store, key) => idbRun(store, 'readwrite', s => s.delete(key));
+    const idbAll = (store) => idbRun(store, 'readonly', s => s.getAll());
+
+    const RATIO_MAP = { '1:1': 1, '4:5': 0.8, '5:4': 1.25 };
+
+    let cropper = null;
+    let selectedFiles = [];
+    let currentFileIndex = 0;
+    let lastCropData = null;
+    let cellsData = [];
+    let sortable = null;
+    let isEditMode = false;
+    let cropRatio = '1:1';
+    let modalRatio = '1:1';
+    let appReady = false;
+    let autosaveEnabled = true;
+    let autosaveTimer = null;
+    let pendingDraft = null;
+    const imgCache = {};
+
+    const HELP_HTML = `
+        <h3><i class="fa-solid fa-image"></i> 업로드와 크롭</h3>
+        <ul>
+            <li>점선 영역에 이미지를 끌어다 놓거나 클릭하여 업로드합니다.</li>
+            <li>업로드하면 <b>정밀 크롭창이 자동으로 열립니다.</b> 크롭창 안에서도 비율을 바꿀 수 있어요.</li>
+            <li>하나를 원하는 구도로 크롭한 뒤 <b>[일괄 크롭 적용]</b>을 누르면 대기열 전체가 같은 구도로 잘립니다.</li>
+        </ul>
+        <h3><i class="fa-solid fa-grip"></i> 표정 컷 관리</h3>
+        <ul>
+            <li>카드를 드래그해 순서를 바꾸면 <b>시트에 배치되는 순서</b>가 그대로 바뀝니다.</li>
+            <li><b>[이름 수정 모드]</b>를 켜면 카드를 눌러 라벨을 직접 바꿀 수 있습니다.</li>
+            <li>이름 생성 방식을 <b>순번</b>으로 두면 01, 02… 형태로 자동 매겨집니다.</li>
+        </ul>
+        <h3><i class="fa-solid fa-sliders"></i> 시트 조판과 저장</h3>
+        <ul>
+            <li>셀 크기·간격·모서리·열 수, 배경/텍스트 색, 라벨 위치와 스타일을 조절할 수 있습니다.</li>
+            <li><b>[현재 테마 색 가져오기]</b>를 누르면 지금 화면 테마가 시트 색으로 들어옵니다.</li>
+            <li>PNG는 1× / 2× / 4×로 저장됩니다. 4×로 뽑을 거면 <b>저장 화질을 768px</b>로 올려두세요.</li>
+        </ul>
+        <h3><i class="fa-solid fa-database"></i> 저장과 백업</h3>
+        <ul>
+            <li><b>자동 저장</b>이 켜져 있으면 표정 컷과 조판 설정이 변경될 때마다 알아서 기록됩니다. 창을 닫았다 다시 열면 이어서 작업할지 물어봅니다.</li>
+            <li>자동 저장은 <b>작업 하나</b>만 보관합니다. 여러 캐릭터를 보관하려면 이름을 적고 <b>[저장하기]</b>를 눌러 목록에 넣어주세요.</li>
+            <li>시트 제작소는 <b>전용 저장소(IndexedDB)</b>를 씁니다. 흔히 말하는 5MB 제한은 localStorage에만 해당하며, 여기에는 적용되지 않습니다. 실제 한도는 기기의 남은 디스크 공간에 따라 정해지고 보통 수 GB 단위입니다.</li>
+            <li>단, 한도가 넉넉해도 <b>디스크가 부족해지면 브라우저가 오래 쓰지 않은 사이트의 데이터를 통째로 지울 수 있습니다.</b> 게이지 아래 <b>[영구 보관]</b> 버튼을 눌러 두면 그 자동 삭제 대상에서 빠집니다. (허용 여부는 브라우저가 결정하며, 이 사이트를 북마크해두면 허용될 확률이 올라갑니다.)</li>
+            <li>브라우저 데이터를 직접 지우면 영구 보관이라도 함께 사라지므로, 중요한 작업은 <b>[전체 DB 백업]</b>으로 파일을 내려받아 두세요.</li>
+        </ul>
+    `;
+    document.getElementById('help-body').innerHTML = HELP_HTML;
+    document.getElementById('welcome-help').innerHTML = HELP_HTML;
+
+    const $ = (id) => document.getElementById(id);
+    const uid = () => 'o' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+    const escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const numOf = (id, d) => { const v = parseFloat($(id).value); return isNaN(v) ? d : v; };
+
+    /* ---------------- 저장소 게이지 ---------------- */
+    function fmtBytes(b) {
+        if (b >= 1024 ** 3) return (b / (1024 ** 3)).toFixed(1) + 'GB';
+        if (b >= 1024 * 1024) return (b / (1024 * 1024)).toFixed(1) + 'MB';
+        return Math.max(1, Math.round(b / 1024)) + 'KB';
+    }
+
+    async function updateStorageIndicator() {
+        let bytes = 0, charCount = 0;
+        try {
+            const all = await idbAll(S_CHAR);
+            charCount = all.length;
+            all.forEach(rec => { bytes += JSON.stringify(rec).length; });
+            const draft = await idbGet(S_DRAFT, 'current');
+            if (draft) bytes += JSON.stringify(draft).length;
+        } catch (e) { /* DB를 아직 못 열었으면 0으로 둔다 */ }
+
+        let quota = 0;
+        if (navigator.storage && navigator.storage.estimate) {
+            try { quota = (await navigator.storage.estimate()).quota || 0; } catch (e) {}
+        }
+
+        // 막대는 눈에 보이라고 두는 표시용 기준선일 뿐, 실제 한도가 아니다
+        const pct = Math.min(100, (bytes / SOFT_BUDGET) * 100);
+        $('storage-text').innerText = `${(bytes / (1024 * 1024)).toFixed(2)}MB · 캐릭터 ${charCount}개`;
+        const bar = $('storage-bar-fill');
+        bar.style.width = `${Math.max(pct, bytes > 0 ? 1.5 : 0)}%`;
+        bar.style.backgroundColor = pct > 90 ? '#ef4444' : 'var(--accent)';
+
+        $('storage-note').innerHTML = quota
+            ? `<i class="fa-solid fa-shield-halved"></i> 시트 제작소 전용 IndexedDB · 한도 ${fmtBytes(quota)}
+               <span style="opacity:.75;">(localStorage의 5MB 제한과는 별개입니다. 막대는 보기 편하도록 50MB를 기준으로 그린 것이며 실제 한도가 아닙니다.)</span>`
+            : `<i class="fa-solid fa-shield-halved"></i> 시트 제작소 전용 IndexedDB · 한도 확인 불가`;
+
+        updatePersistStatus();
+    }
+
+    /* 용량이 넉넉해도 브라우저는 디스크가 부족하면 오래 안 쓴 사이트의 데이터를
+       통째로 지웁니다. 영구 보관을 받아두면 그 자동 삭제 대상에서 빠집니다. */
+    async function updatePersistStatus() {
+        const statusEl = $('persist-status'), btn = $('persist-btn');
+        if (!navigator.storage || !navigator.storage.persisted) {
+            statusEl.innerHTML = '';
+            btn.style.display = 'none';
+            return;
+        }
+        try {
+            const persisted = await navigator.storage.persisted();
+            if (persisted) {
+                statusEl.innerHTML = '<i class="fa-solid fa-lock" style="color:var(--accent);"></i> 영구 보관 중 — 자동 삭제되지 않습니다';
+                btn.style.display = 'none';
+            } else {
+                statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> 임시 보관 — 디스크가 부족하면 브라우저가 지울 수 있습니다';
+                btn.style.display = '';
+            }
+        } catch (e) {
+            statusEl.innerHTML = '';
+            btn.style.display = 'none';
+        }
+    }
+
+    async function requestPersistence() {
+        if (!navigator.storage || !navigator.storage.persist) return;
+        try {
+            const granted = await navigator.storage.persist();
+            if (granted) {
+                showToast('영구 보관이 허용되었습니다.');
+            } else {
+                showToast('브라우저가 거절했습니다. 이 사이트를 북마크하거나 자주 방문하면 허용될 수 있어요.');
+            }
+            updatePersistStatus();
+        } catch (e) {
+            showToast('영구 보관을 요청할 수 없습니다.');
+        }
+    }
+
+    /* ---------------- 테마 / 모드 ---------------- */
+    function setScreenMode(mode, save = true) {
+        const body = document.body;
+        if (mode === 'light') {
+            body.classList.remove('dark-mode'); body.classList.add('light-mode');
+            $('btn-light').classList.add('active'); $('btn-dark').classList.remove('active');
+        } else {
+            body.classList.remove('light-mode'); body.classList.add('dark-mode');
+            $('btn-dark').classList.add('active'); $('btn-light').classList.remove('active');
+        }
+        if (save) localStorage.setItem('sheetmaker_screen_mode', mode);
+    }
+
+    function setTheme(themeName, el, save = true) {
+        document.body.style.removeProperty('--accent');
+        document.body.style.removeProperty('--accent-rgb');
+        document.body.classList.remove('theme-mono', 'theme-blue', 'theme-green', 'theme-purple', 'theme-red');
+        document.body.classList.add('theme-' + themeName);
+        document.querySelectorAll('.theme-dot').forEach(dot => dot.classList.remove('active'));
+        if (el) el.classList.add('active');
+        if (save) {
+            localStorage.setItem('sheetmaker_theme_type', 'preset');
+            localStorage.setItem('sheetmaker_theme_name', themeName);
+        }
+    }
+
+    function setCustomTheme(hex, save = true) {
+        document.body.classList.remove('theme-mono', 'theme-blue', 'theme-green', 'theme-purple', 'theme-red');
+        document.querySelectorAll('.theme-dot').forEach(dot => dot.classList.remove('active'));
+        const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+        document.body.style.setProperty('--accent', hex);
+        document.body.style.setProperty('--accent-rgb', `${r}, ${g}, ${b}`);
+        if (save) {
+            localStorage.setItem('sheetmaker_theme_type', 'custom');
+            localStorage.setItem('sheetmaker_theme_color', hex);
+        }
+    }
+
+    function rgbToHex(str) {
+        const m = str.match(/\d+/g);
+        if (!m || m.length < 3) return null;
+        return '#' + m.slice(0, 3).map(n => parseInt(n, 10).toString(16).padStart(2, '0')).join('');
+    }
+
+    /* ---------------- 레이아웃 ---------------- */
+    function changeColumnCount(save = true) {
+        const count = $('column-count').value;
+        $('cell-container').style.gridTemplateColumns = `repeat(${count}, 1fr)`;
+        const box = $('main-container');
+        if (count === '4') box.style.maxWidth = '1160px';
+        if (count === '5') box.style.maxWidth = '1240px';
+        if (count === '6') box.style.maxWidth = '1420px';
+        if (save) localStorage.setItem('sheetmaker_layout_columns', count);
+    }
+
+    function changeCropRatio() {
+        cropRatio = $('crop-ratio').value;
+        renderCells();
+        renderSheet();
+    }
+
+    function cellAspect() {
+        return RATIO_MAP[cropRatio] || 1;
+    }
+
+    /* ---------------- 업로드 ---------------- */
+    const dropArea = $('drop-area');
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => {
+        dropArea.addEventListener(name, e => { e.preventDefault(); e.stopPropagation(); });
+    });
+    ['dragenter', 'dragover'].forEach(n => dropArea.addEventListener(n, () => dropArea.classList.add('drag-over')));
+    ['dragleave', 'drop'].forEach(n => dropArea.addEventListener(n, () => dropArea.classList.remove('drag-over')));
+    dropArea.addEventListener('drop', e => { if (e.dataTransfer.files) handleFiles(e.dataTransfer.files); });
+    $('img-input').addEventListener('change', e => { if (e.target.files) handleFiles(e.target.files); });
+
+    function handleFiles(files) {
+        const arr = Array.from(files).filter(f => f.type.startsWith('image/'));
+        if (!arr.length) return;
+        const startIndex = selectedFiles.length;
+        selectedFiles = selectedFiles.concat(arr);
+        renderPreviews();
+        processFilesAutomatically(arr);
+        setTimeout(() => openEditorForPreview(startIndex), 200);
+        $('img-input').value = '';
+    }
+
+    function renderPreviews() {
+        const area = $('preview-area');
+        area.innerHTML = '';
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'preview-wrapper';
+                wrapper.innerHTML = `
+                    <div class="preview-item" onclick="openEditorForPreview(${index})">
+                        <img src="${e.target.result}" alt="">
+                        <div class="preview-delete-btn" onclick="deletePreview(event, ${index})"><i class="fa-solid fa-xmark"></i></div>
+                    </div>
+                    <div class="preview-label">${index + 1}</div>`;
+                area.appendChild(wrapper);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function deletePreview(event, index) {
+        event.stopPropagation();
+        const file = selectedFiles[index];
+        selectedFiles.splice(index, 1);
+        if (file) {
+            const base = baseName(file.name);
+            cellsData = cellsData.filter(item => item.originalFileName !== base);
+        }
+        renderPreviews();
+        renderCells();
+    }
+
+    const baseName = (n) => n.split('.').slice(0, -1).join('.') || n;
+
+    /* ---------------- 크롭 ---------------- */
+    function cropDims() {
+        const q = parseInt($('quality-level').value, 10);
+        if (cropRatio === 'free') return { w: q, h: q, free: true };
+        const r = RATIO_MAP[cropRatio];
+        return { w: Math.round(q * Math.min(1, r)), h: Math.round(q * Math.min(1, r) / r), free: false };
+    }
+
+    function setCropperRatio(r) {
+        modalRatio = r;
+        document.querySelectorAll('.ratio-chip').forEach(c => c.classList.toggle('active', c.dataset.ratio === r));
+        if (cropper) cropper.setAspectRatio(r === 'free' ? NaN : RATIO_MAP[r]);
+    }
+
+    function openEditorForPreview(index) {
+        currentFileIndex = index;
+        const file = selectedFiles[index];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            const imgEl = $('image-to-crop');
+            imgEl.src = e.target.result;
+            $('cropper-modal').style.display = 'flex';
+            modalRatio = cropRatio;
+            document.querySelectorAll('.ratio-chip').forEach(c => c.classList.toggle('active', c.dataset.ratio === cropRatio));
+            if (cropper) cropper.destroy();
+            setTimeout(() => {
+                cropper = new Cropper(imgEl, {
+                    aspectRatio: cropRatio === 'free' ? NaN : RATIO_MAP[cropRatio],
+                    viewMode: 1, autoCropArea: 1
+                });
+            }, 50);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function closeCropper() {
+        $('cropper-modal').style.display = 'none';
+        if (cropper) { cropper.destroy(); cropper = null; }
+        $('img-input').value = '';
+    }
+
+    function saveCrop() {
+        if (!cropper) return;
+        const d = cropDims();
+        const canvas = cropper.getCroppedCanvas({ width: d.w, height: d.h });
+        if (!canvas) return;
+        const url = canvas.toDataURL('image/webp', 0.88);
+        lastCropData = cropper.getData();
+        const file = selectedFiles[currentFileIndex];
+        if (!file) return;
+        upsertCell(baseName(file.name), url, lastCropData);
+        closeCropper();
+        renderCells();
+    }
+
+    function labelFor(base, index) {
+        const method = $('label-method').value;
+        if (method === 'at_filename') return '@' + base;
+        if (method === 'number') return String(index + 1).padStart(2, '0');
+        return base;
+    }
+
+    function upsertCell(base, url, crop) {
+        const existing = cellsData.findIndex(i => i.originalFileName === base);
+        const idx = existing !== -1 ? existing : cellsData.length;
+        const obj = {
+            id: existing !== -1 ? cellsData[existing].id : (Date.now() + Math.random()),
+            text: existing !== -1 ? cellsData[existing].text : labelFor(base, idx),
+            src: url, crop: crop, originalFileName: base
+        };
+        if (existing !== -1) cellsData[existing] = obj; else cellsData.push(obj);
+        delete imgCache[obj.src];
+    }
+
+    function processFilesAutomatically(filesToProcess) {
+        filesToProcess.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const d = cropDims();
+                    const canvas = document.createElement('canvas');
+                    canvas.width = d.w; canvas.height = d.h;
+                    const ctx = canvas.getContext('2d');
+                    if (lastCropData) {
+                        ctx.drawImage(img, lastCropData.x, lastCropData.y, lastCropData.width, lastCropData.height, 0, 0, d.w, d.h);
+                    } else {
+                        drawCover(ctx, img, 0, 0, d.w, d.h);
+                    }
+                    upsertCell(baseName(file.name), canvas.toDataURL('image/webp', 0.88), lastCropData);
+                    renderCells();
+                };
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function drawCover(ctx, img, x, y, w, h) {
+        const s = Math.max(w / img.width, h / img.height);
+        const dw = img.width * s, dh = img.height * s;
+        ctx.drawImage(img, x - (dw - w) / 2, y - (dh - h) / 2, dw, dh);
+    }
+
+    function applyGlobalCrop() {
+        if (!lastCropData) return alert('먼저 이미지를 하나 크롭 편집해주세요.');
+        if (!selectedFiles.length) return alert('일괄 크롭을 위해 대기열에 원본 이미지가 필요합니다.');
+        let done = 0;
+        selectedFiles.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const d = cropDims();
+                    const canvas = document.createElement('canvas');
+                    canvas.width = d.w; canvas.height = d.h;
+                    canvas.getContext('2d').drawImage(img, lastCropData.x, lastCropData.y, lastCropData.width, lastCropData.height, 0, 0, d.w, d.h);
+                    const target = cellsData.find(i => i.originalFileName === baseName(file.name));
+                    if (target) {
+                        delete imgCache[target.src];
+                        target.src = canvas.toDataURL('image/webp', 0.88);
+                        target.crop = lastCropData;
+                    }
+                    if (++done === selectedFiles.length) {
+                        renderCells();
+                        showToast(`${done}장에 동일 구도를 적용했습니다.`);
+                        renderSheet();
+                    }
+                };
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    /* ---------------- 셀 그리드 ---------------- */
+    function reapplyLabels() {
+        cellsData.forEach((item, i) => { item.text = labelFor(item.originalFileName, i); });
+        renderCells();
+        renderSheet();
+    }
+
+    function sortCellsByName() {
+        if (!cellsData.length) return;
+        cellsData.sort((a, b) => a.text.localeCompare(b.text, 'ko-KR', { sensitivity: 'base' }));
+        renderCells();
+        showToast('이름순으로 정렬되었습니다.');
+        renderSheet();
+    }
+
+    function toggleEditMode() {
+        isEditMode = !isEditMode;
+        const btn = $('edit-mode-btn');
+        if (isEditMode) {
+            btn.style.borderColor = '#ef4444'; btn.style.color = '#ef4444';
+            btn.style.background = 'rgba(239, 68, 68, 0.1)';
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> 수정 완료';
+            showToast('수정 모드 ON: 카드를 눌러 이름을 변경하세요.');
+        } else {
+            btn.style.borderColor = ''; btn.style.color = ''; btn.style.background = 'transparent';
+            btn.innerHTML = '<i class="fa-solid fa-pen"></i> 이름 수정 모드';
+            showToast('수정 모드 OFF');
+        }
+        renderCells();
+    }
+
+    function toggleCellVisible(event, id) {
+        event.stopPropagation();
+        const item = cellsData.find(i => String(i.id) === String(id));
+        if (!item) return;
+        item.visible = item.visible === false;
+        renderCells();
+        renderSheet();
+    }
+
+    function deleteCell(event, id) {
+        event.stopPropagation();
+        cellsData = cellsData.filter(i => String(i.id) !== String(id));
+        renderCells();
+        renderSheet();
+    }
+
+    function renderCells() {
+        const container = $('cell-container');
+        container.innerHTML = '';
+        $('cell-count-badge').textContent = cellsData.length;
+
+        if (!cellsData.length) {
+            container.innerHTML = `<div class="empty-state"><i class="fa-regular fa-face-smile"></i>아직 표정 컷이 없습니다.<br>왼쪽에서 이미지를 업로드해 시작하세요.</div>`;
+        }
+
+        const ratio = cropRatio === 'free' ? 1 : RATIO_MAP[cropRatio];
+        cellsData.forEach((item, idx) => {
+            const card = document.createElement('div');
+            card.className = 'cell-card' + (item.visible === false ? ' cell-hidden' : '');
+            card.style.aspectRatio = String(ratio);
+            card.onclick = (e) => {
+                if (e.target.closest('.card-delete-btn') || e.target.closest('.vis-toggle')) return;
+                if (isEditMode) {
+                    const newName = prompt('새로운 이름을 입력하세요:', item.text);
+                    if (newName !== null && newName.trim() !== '') {
+                        item.text = newName.trim();
+                        renderCells();
+                        renderSheet();
+                    }
+                } else {
+                    copyText(item.text);
+                }
+            };
+            const editIcon = isEditMode ? '<i class="fa-solid fa-pen" style="font-size:10px; margin-left:4px; opacity:0.8;"></i>' : '';
+            const shown = item.visible !== false;
+            card.innerHTML = `
+                <div class="order-no">${idx + 1}</div>
+                <div class="vis-toggle ${shown ? 'on' : ''}" title="${shown ? '시트에 표시 중' : '시트에서 제외됨'}"
+                     onclick="toggleCellVisible(event, '${item.id}')"><i class="fa-solid fa-eye${shown ? '' : '-slash'}"></i></div>
+                <div class="card-delete-btn" onclick="deleteCell(event, '${item.id}')"><i class="fa-solid fa-trash-can"></i></div>
+                <img src="${item.src}" alt="${escapeHtml(item.text)}">
+                <div class="label-overlay">${escapeHtml(item.text)} ${editIcon}</div>`;
+            container.appendChild(card);
+        });
+
+        initSortable();
+        renderSheet();      // 새로 넣은 컷이 시트에 바로 나타나도록
+        scheduleAutosave();
+    }
+
+    function initSortable() {
+        const container = $('cell-container');
+        if (sortable) sortable.destroy();
+        sortable = Sortable.create(container, {
+            animation: 250,
+            filter: '.empty-state',
+            onEnd: evt => {
+                const moved = cellsData.splice(evt.oldIndex, 1)[0];
+                cellsData.splice(evt.newIndex, 0, moved);
+                renderCells();
+                renderSheet();
+            }
+        });
+    }
+
+    /* ---------------- 시트 편집기 ----------------
+       예전에는 캔버스에 한 번에 그려서 뽑았지만, 이제는 개체를 DOM으로 올려두고
+       직접 끌어 옮깁니다. 저장할 때만 html2canvas로 한 장의 그림으로 굽습니다. */
+
+    const COC_STATS = [
+        ['근력', 'STR'], ['민첩성', 'DEX'], ['정신력', 'POW'],
+        ['건강', 'CON'], ['외모', 'APP'], ['교육', 'EDU'],
+        ['크기', 'SIZ'], ['지능', 'INT'], ['행운', 'LUK']
+    ];
+
+    // 고딕/명조 두 갈래. 각각 영문·한글·일본어용 세 벌을 한 줄로 물려 두어,
+    // 어떤 글자든 그 글자를 가진 첫 번째 폰트가 받아 그립니다(→ 두부 현상 없음).
+    // 영문을 맨 앞에 두어야 라틴 글자가 한글용 폰트의 라틴 자형으로 바뀌지 않고,
+    // 한자는 한국어 도구인 만큼 KR을 JP보다 앞에 두어 한국식 자형으로 나옵니다.
+    const FONTS = {
+        'sans':  "'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', sans-serif",
+        'serif': "'Noto Serif', 'Noto Serif KR', 'Noto Serif JP', serif"
+    };
+    // 6종 모두가 지원하는 굵기만 고릅니다 (Serif KR/JP는 200 미만이 없습니다).
+    const WEIGHTS = [[300, '얇게'], [400, '보통'], [500, '조금 굵게'], [600, '굵게'], [700, '진하게'], [900, '아주 진하게']];
+
+    function defaultSheetState() {
+        return {
+            canvas: { w: 1200, h: 800, bgMode: 'solid', bg: '#1e1e1e', bg2: '#3a3a3a',
+                      angle: 160, stop1: 0, stop2: 100, font: 'sans' },
+            group: { x: 300, y: 150, cols: 5, size: 150, gap: 10, radius: 12,
+                     cellMode: 'fill', cellBg: '#000000', strokeColor: '#f5f5f5', strokeW: 0,
+                     labelShow: true, labelStyle: 'outline', labelSize: 14,
+                     labelWeight: 700, labelColor: '#ffffff', opacity: 100, z: 20 },
+            name: { show: true, x: 60, y: 44, text: '', sub: '', size: 34, subSize: 15,
+                    weight: 900, subWeight: 400, color: '#f5f5f5', subColor: '#8c8c8c' },
+            vertical: { show: true, text: '', size: 20, weight: 700, color: '#f5f5f5', pos: 50 },
+            stats: { show: false, x: 60, y: 560, mode: 'both', size: 13, weight: 900,
+                     color: '#f5f5f5', bg: '#000000', bgAlpha: 28, cellW: 104, values: {}, z: 30 },
+            stickers: []
+        };
+    }
+
+    function fillWeightSelects() {
+        document.querySelectorAll('.weight-select').forEach(sel => {
+            if (sel.dataset.filled) return;
+            sel.dataset.filled = '1';
+            WEIGHTS.forEach(([v, label]) => {
+                const o = document.createElement('option');
+                o.value = v; o.textContent = `${label} (${v})`;
+                sel.appendChild(o);
+            });
+        });
+    }
+    fillWeightSelects();
+
+    // CSS의 0deg는 '아래에서 위로'이고 시계 방향으로 돕니다. 미리보기와 시트가 같은 식을 씁니다.
+    function bgCss(C) {
+        if (C.bgMode !== 'gradient') return C.bg;
+        const a = Math.min(C.stop1, C.stop2), b = Math.max(C.stop1, C.stop2);
+        return `linear-gradient(${C.angle}deg, ${C.bg} ${a}%, ${C.bg2} ${b}%)`;
+    }
+
+    function setBgMode(mode) {
+        sheetState.canvas.bgMode = mode;
+        document.querySelectorAll('#cv-bgmode-row .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+        const grad = mode === 'gradient';
+        $('cv-grad-box').hidden = !grad;
+        $('cv-bg2-field').hidden = !grad;
+        $('cv-bg-label').textContent = grad ? '시작 색' : '배경색';
+        updateGradPreview();
+        renderSheet(); scheduleAutosave();
+    }
+
+    function setBgAngle(deg) {
+        sheetState.canvas.angle = deg;
+        $('cv-angle').value = deg;
+        $('cv-angle-val').textContent = deg + '°';
+        updateGradPreview();
+        renderSheet(); scheduleAutosave();
+    }
+
+    function updateGradPreview() {
+        const el = $('cv-grad-preview');
+        if (el) el.style.background = bgCss(sheetState.canvas);
+    }
+
+    function setCellMode(mode) {
+        sheetState.group.cellMode = mode;
+        document.querySelectorAll('#gp-mode-row .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+        $('gp-bg-field').style.visibility = (mode === 'fill') ? '' : 'hidden';
+        renderSheet(); scheduleAutosave();
+    }
+
+    let sheetState = defaultSheetState();
+    let stageScale = 1;
+    let selectedObj = 'canvas';
+    let selectedStickerId = null;
+    let zCounter = 40;
+
+    const VERTICAL_BAND = 54;   // 왼쪽 세로 텍스트가 차지하는 폭
+
+    /* ---- 개체 패널 전환 ---- */
+    function selectObject(kind) {
+        selectedObj = kind;
+        document.querySelectorAll('.obj-tab').forEach(t => t.classList.toggle('active', t.dataset.obj === kind));
+        document.querySelectorAll('.obj-panel').forEach(p => { p.hidden = p.dataset.panel !== kind; });
+        document.querySelectorAll('#sheet-canvas .sheet-obj').forEach(el => {
+            const isSel = el.dataset.obj === kind && (kind !== 'sticker' || el.dataset.id === selectedStickerId);
+            el.classList.toggle('obj-selected', isSel);
+        });
+    }
+
+    function focusObject(kind, id) {
+        if (kind === 'sticker' && id) { selectedStickerId = id; syncStickerControls(); }
+        selectObject(kind);
+    }
+
+    /* ---- 드래그 ---- */
+    function makeDraggable(el, get, set, kind, id) {
+        el.addEventListener('pointerdown', e => {
+            if (e.target.isContentEditable) return;
+            if (e.target.closest('.obj-handle')) return;
+            focusObject(kind, id);
+            el.setPointerCapture(e.pointerId);
+            const start = get();
+            const sx = e.clientX, sy = e.clientY;
+            let moved = false;
+
+            const move = ev => {
+                const dx = (ev.clientX - sx) / stageScale;
+                const dy = (ev.clientY - sy) / stageScale;
+                if (Math.abs(dx) > 1 || Math.abs(dy) > 1) moved = true;
+                set(Math.round(start.x + dx), Math.round(start.y + dy));
+            };
+            const up = () => {
+                el.removeEventListener('pointermove', move);
+                el.removeEventListener('pointerup', up);
+                if (moved) scheduleAutosave();
+            };
+            el.addEventListener('pointermove', move);
+            el.addEventListener('pointerup', up);
+            e.preventDefault();
+        });
+    }
+
+    /* ---- 캔버스 배율 ---- */
+    function updateStageScale() {
+        const wrap = $('stage-wrap'), holder = $('stage-holder'), cv = $('sheet-canvas');
+        if (!wrap) return;
+        const avail = Math.max(120, wrap.clientWidth - 24);
+        stageScale = Math.min(1, avail / sheetState.canvas.w);
+        cv.style.transform = `scale(${stageScale})`;
+        holder.style.width = (sheetState.canvas.w * stageScale) + 'px';
+        holder.style.height = (sheetState.canvas.h * stageScale) + 'px';
+    }
+
+    /* ---- 시트 렌더 ---- */
+    function visibleCells() { return cellsData.filter(c => c.visible !== false); }
+
+    function renderSheet() {
+        const cv = $('sheet-canvas');
+        if (!cv) return;
+        const S = sheetState;
+
+        cv.style.width = S.canvas.w + 'px';
+        cv.style.height = S.canvas.h + 'px';
+        cv.style.background = bgCss(S.canvas);
+        cv.style.fontFamily = FONTS[S.canvas.font] || FONTS['sans-kr'];
+        cv.innerHTML = '';
+
+        renderVertical(cv);
+        renderNameBlock(cv);
+        renderGroup(cv);
+        renderStats(cv);
+        S.stickers.forEach(sk => renderSticker(cv, sk));
+
+        updateStageScale();
+        selectObject(selectedObj);
+
+        const shown = visibleCells().length;
+        $('sheet-meta').textContent =
+            `${S.canvas.w} × ${S.canvas.h}px · 표정 ${shown}/${cellsData.length}컷 · 스티커 ${S.stickers.length}개 · 3× 저장 시 ${S.canvas.w * 3} × ${S.canvas.h * 3}px`;
+    }
+
+    function renderVertical(cv) {
+        const V = sheetState.vertical;
+        if (!V.show) return;
+        const el = document.createElement('div');
+        el.className = 'sheet-obj sheet-vertical';
+        el.dataset.obj = 'vertical';
+        el.style.left = '0px';
+        el.style.width = VERTICAL_BAND + 'px';
+        el.style.top = '0px';
+        el.style.height = sheetState.canvas.h + 'px';
+        el.innerHTML = `<span class="vt-inner" contenteditable="true" data-ph="시나리오 제목"
+                          style="font-size:${V.size}px; font-weight:${V.weight}; color:${V.color}; top:${V.pos}%;">${escapeHtml(V.text)}</span>`;
+        const span = el.querySelector('.vt-inner');
+        span.addEventListener('input', () => { sheetState.vertical.text = span.innerText.trim(); $('vt-text').value = sheetState.vertical.text; scheduleAutosave(); });
+        el.addEventListener('pointerdown', e => { if (!e.target.isContentEditable) focusObject('vertical'); });
+        cv.appendChild(el);
+    }
+
+    function renderNameBlock(cv) {
+        const N = sheetState.name;
+        if (!N.show) return;
+        const el = document.createElement('div');
+        el.className = 'sheet-obj sheet-name';
+        el.dataset.obj = 'name';
+        el.style.left = N.x + 'px';
+        el.style.top = N.y + 'px';
+        el.innerHTML =
+            `<div class="nm-main" contenteditable="true" data-ph="캐릭터 이름"
+                  style="font-size:${N.size}px; font-weight:${N.weight}; color:${N.color};">${escapeHtml(N.text)}</div>
+             <div class="nm-sub" contenteditable="true" data-ph="원문 이름"
+                  style="font-size:${N.subSize}px; font-weight:${N.subWeight}; color:${N.subColor};">${escapeHtml(N.sub)}</div>`;
+        const main = el.querySelector('.nm-main'), sub = el.querySelector('.nm-sub');
+        main.addEventListener('input', () => { sheetState.name.text = main.innerText.trim(); $('nm-text').value = sheetState.name.text; scheduleAutosave(); });
+        sub.addEventListener('input', () => { sheetState.name.sub = sub.innerText.trim(); $('nm-sub').value = sheetState.name.sub; scheduleAutosave(); });
+        makeDraggable(el, () => ({ x: sheetState.name.x, y: sheetState.name.y }),
+            (x, y) => { sheetState.name.x = x; sheetState.name.y = y; el.style.left = x + 'px'; el.style.top = y + 'px'; }, 'name');
+        cv.appendChild(el);
+    }
+
+    function renderGroup(cv) {
+        const G = sheetState.group;
+        const cells = visibleCells();
+        const el = document.createElement('div');
+        el.className = 'sheet-obj sheet-group';
+        el.dataset.obj = 'group';
+        el.style.left = G.x + 'px';
+        el.style.top = G.y + 'px';
+        el.style.opacity = G.opacity / 100;
+        el.style.zIndex = G.z;
+        el.style.gridTemplateColumns = `repeat(${Math.min(G.cols, Math.max(cells.length, 1))}, ${G.size}px)`;
+        el.style.gap = G.gap + 'px';
+
+        if (!cells.length) {
+            el.classList.add('group-empty');
+            el.innerHTML = '<div class="group-empty-note">표시할 표정 컷이 없습니다</div>';
+        }
+
+        cells.forEach(item => {
+            const cell = document.createElement('div');
+            cell.className = 'sheet-cell';
+            cell.style.width = G.size + 'px';
+            cell.style.height = G.size + 'px';
+            cell.style.borderRadius = G.radius + 'px';
+            // '획만' 모드는 배경을 비워, 투명 PNG 뒤로 시트 배경이 그대로 비칩니다.
+            cell.style.background = (G.cellMode === 'stroke') ? 'transparent' : G.cellBg;
+            cell.style.border = G.strokeW > 0 ? `${G.strokeW}px solid ${G.strokeColor}` : 'none';
+            let label = '';
+            if (G.labelShow && item.text) {
+                label = `<span class="cell-label ls-${G.labelStyle}"
+                          style="font-size:${G.labelSize}px; font-weight:${G.labelWeight}; color:${G.labelColor};">${escapeHtml(item.text)}</span>`;
+            }
+            cell.innerHTML = `<img src="${item.src}" alt="">${label}`;
+            el.appendChild(cell);
+        });
+
+        makeDraggable(el, () => ({ x: sheetState.group.x, y: sheetState.group.y }),
+            (x, y) => { sheetState.group.x = x; sheetState.group.y = y; el.style.left = x + 'px'; el.style.top = y + 'px'; }, 'group');
+
+        // 박스 끝을 잡아 셀 크기를 한 번에 키우고 줄입니다.
+        // 열 수와 간격은 그대로 두고, 전체 폭을 셀 크기로 되돌려 계산합니다.
+        const grip = document.createElement('div');
+        grip.className = 'obj-handle grp-resize';
+        grip.title = '드래그해서 표정 크기 조절';
+        el.appendChild(grip);
+
+        grip.addEventListener('pointerdown', e => {
+            e.stopPropagation();
+            focusObject('group');
+            grip.setPointerCapture(e.pointerId);
+            const cols = Math.min(G.cols, Math.max(cells.length, 1));
+            const startSize = G.size;
+            const startW = cols * startSize + (cols - 1) * G.gap;
+            const sx = e.clientX, sy = e.clientY;
+
+            const move = ev => {
+                // 가로·세로 중 더 많이 끈 쪽을 따라가 대각선 드래그가 자연스럽게 먹히도록 합니다.
+                const dx = (ev.clientX - sx) / stageScale;
+                const dy = (ev.clientY - sy) / stageScale;
+                const delta = Math.abs(dx) >= Math.abs(dy) ? dx : dy;
+                const size = clamp(Math.round((startW + delta - (cols - 1) * G.gap) / cols), 40, 500);
+                if (size === sheetState.group.size) return;
+                sheetState.group.size = size;
+                el.style.gridTemplateColumns = `repeat(${cols}, ${size}px)`;
+                el.querySelectorAll('.sheet-cell').forEach(c => {
+                    c.style.width = size + 'px';
+                    c.style.height = size + 'px';
+                });
+            };
+            const up = () => {
+                grip.removeEventListener('pointermove', move);
+                grip.removeEventListener('pointerup', up);
+                scheduleAutosave();
+            };
+            grip.addEventListener('pointermove', move);
+            grip.addEventListener('pointerup', up);
+            e.preventDefault();
+        });
+
+        // 오른쪽 가운데를 끌면 열 수가 바뀝니다. 셀 크기는 그대로 두고 한 줄에 몇 칸이 들어갈지만 정합니다.
+        const colGrip = document.createElement('div');
+        colGrip.className = 'obj-handle grp-cols';
+        colGrip.title = '드래그해서 열 수 조절';
+        el.appendChild(colGrip);
+
+        colGrip.addEventListener('pointerdown', e => {
+            e.stopPropagation();
+            focusObject('group');
+            colGrip.setPointerCapture(e.pointerId);
+            const startCols = Math.min(G.cols, Math.max(cells.length, 1));
+            const startW = startCols * G.size + (startCols - 1) * G.gap;
+            const sx = e.clientX;
+
+            const move = ev => {
+                const dx = (ev.clientX - sx) / stageScale;
+                const cols = clamp(Math.round((startW + dx + G.gap) / (G.size + G.gap)), 1, 20);
+                if (cols === sheetState.group.cols) return;
+                sheetState.group.cols = cols;
+                el.style.gridTemplateColumns = `repeat(${Math.min(cols, Math.max(cells.length, 1))}, ${G.size}px)`;
+            };
+            const up = () => {
+                colGrip.removeEventListener('pointermove', move);
+                colGrip.removeEventListener('pointerup', up);
+                scheduleAutosave();
+            };
+            colGrip.addEventListener('pointermove', move);
+            colGrip.addEventListener('pointerup', up);
+            e.preventDefault();
+        });
+
+        cv.appendChild(el);
+    }
+
+    function statLabel(ko, en) {
+        const m = sheetState.stats.mode;
+        if (m === 'en') return en;
+        if (m === 'ko') return ko;
+        return `${ko} <b>${en}</b>`;
+    }
+
+    function hexToRgba(hex, alphaPct) {
+        const h = String(hex || '#000000').replace('#', '');
+        const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16) || 0;
+        return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alphaPct / 100})`;
+    }
+
+    function renderStats(cv) {
+        const T = sheetState.stats;
+        if (!T.show) return;
+        const el = document.createElement('div');
+        el.className = 'sheet-obj sheet-stats';
+        el.dataset.obj = 'stats';
+        el.style.left = T.x + 'px';
+        el.style.top = T.y + 'px';
+        el.style.zIndex = T.z;
+        el.style.gridTemplateColumns = `repeat(3, ${T.cellW}px)`;
+
+        COC_STATS.forEach(([ko, en]) => {
+            const box = document.createElement('div');
+            box.className = 'stat-box';
+            box.style.background = hexToRgba(T.bg, T.bgAlpha);
+            box.style.color = T.color;
+            box.style.fontSize = T.size + 'px';
+            box.innerHTML = `<span class="stat-name">${statLabel(ko, en)}</span>
+                             <span class="stat-val" contenteditable="true" data-key="${en}"
+                                   style="font-size:${Math.round(T.size * 1.25)}px; font-weight:${T.weight};">${escapeHtml(T.values[en] || '')}</span>`;
+            const val = box.querySelector('.stat-val');
+            val.addEventListener('input', () => { sheetState.stats.values[en] = val.innerText.trim(); scheduleAutosave(); });
+            el.appendChild(box);
+        });
+
+        makeDraggable(el, () => ({ x: sheetState.stats.x, y: sheetState.stats.y }),
+            (x, y) => { sheetState.stats.x = x; sheetState.stats.y = y; el.style.left = x + 'px'; el.style.top = y + 'px'; }, 'stats');
+        cv.appendChild(el);
+    }
+
+    function renderSticker(cv, sk) {
+        const el = document.createElement('div');
+        el.className = 'sheet-obj sheet-sticker';
+        el.dataset.obj = 'sticker';
+        el.dataset.id = sk.id;
+        el.style.left = sk.x + 'px';
+        el.style.top = sk.y + 'px';
+        el.style.width = sk.w + 'px';
+        el.style.opacity = sk.opacity / 100;
+        el.style.zIndex = sk.z;
+        el.style.transform = `rotate(${sk.angle}deg)`;
+        el.innerHTML = `<img src="${sk.src}" alt=""><div class="obj-handle sk-resize" title="크기 조절"></div>`;
+
+        makeDraggable(el, () => ({ x: sk.x, y: sk.y }),
+            (x, y) => { sk.x = x; sk.y = y; el.style.left = x + 'px'; el.style.top = y + 'px'; }, 'sticker', sk.id);
+
+        const handle = el.querySelector('.sk-resize');
+        handle.addEventListener('pointerdown', e => {
+            e.stopPropagation();
+            focusObject('sticker', sk.id);
+            handle.setPointerCapture(e.pointerId);
+            const startW = sk.w, sx = e.clientX;
+            const move = ev => {
+                sk.w = Math.max(20, Math.round(startW + (ev.clientX - sx) / stageScale));
+                el.style.width = sk.w + 'px';
+                $('sk-w').value = sk.w;
+            };
+            const up = () => {
+                handle.removeEventListener('pointermove', move);
+                handle.removeEventListener('pointerup', up);
+                scheduleAutosave();
+            };
+            handle.addEventListener('pointermove', move);
+            handle.addEventListener('pointerup', up);
+            e.preventDefault();
+        });
+        cv.appendChild(el);
+    }
+
+    /* ---- 스티커 ---- */
+    function addStickers(event) {
+        const files = Array.from(event.target.files || []).filter(f => f.type.startsWith('image/'));
+        if (!files.length) return;
+        let pending = files.length;
+        files.forEach((file, i) => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const probe = new Image();
+                probe.onload = () => {
+                    const w = Math.min(360, Math.round(sheetState.canvas.w * 0.28));
+                    sheetState.stickers.push({
+                        id: uid(), src: e.target.result, w,
+                        x: 40 + i * 24, y: Math.max(40, sheetState.canvas.h - Math.round(w / (probe.width / probe.height)) - 40),
+                        angle: 0, opacity: 100, z: ++zCounter
+                    });
+                    if (--pending === 0) {
+                        selectedStickerId = sheetState.stickers[sheetState.stickers.length - 1].id;
+                        renderSheet(); syncStickerControls(); selectObject('sticker'); scheduleAutosave();
+                    }
+                };
+                probe.onerror = () => { if (--pending === 0) { renderSheet(); syncStickerControls(); } };
+                probe.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+        event.target.value = '';
+    }
+
+    function currentSticker() { return sheetState.stickers.find(s => s.id === selectedStickerId) || null; }
+
+    function selectStickerById(id) { selectedStickerId = id; syncStickerControls(); selectObject('sticker'); }
+
+    function syncStickerControls() {
+        const has = sheetState.stickers.length > 0;
+        $('sticker-empty').hidden = has;
+        $('sticker-controls').hidden = !has;
+        if (!has) { selectedStickerId = null; return; }
+        if (!currentSticker()) selectedStickerId = sheetState.stickers[0].id;
+
+        const sel = $('sk-select');
+        sel.innerHTML = '';
+        sheetState.stickers.forEach((s, i) => {
+            const o = document.createElement('option');
+            o.value = s.id; o.textContent = `스티커 ${i + 1}`;
+            sel.appendChild(o);
+        });
+        sel.value = selectedStickerId;
+
+        const sk = currentSticker();
+        $('sk-w').value = sk.w;
+        $('sk-angle').value = sk.angle;
+        $('sk-opacity').value = sk.opacity;
+        $('sk-opacity-val').textContent = sk.opacity + '%';
+    }
+
+    function deleteSticker() {
+        const sk = currentSticker();
+        if (!sk) return;
+        sheetState.stickers = sheetState.stickers.filter(s => s.id !== sk.id);
+        selectedStickerId = sheetState.stickers.length ? sheetState.stickers[0].id : null;
+        renderSheet(); syncStickerControls(); scheduleAutosave();
+    }
+
+    function stickerLayer(where) {
+        const sk = currentSticker();
+        if (!sk) return;
+        if (where === 'front') sk.z = ++zCounter;
+        else if (where === 'back') sk.z = 1;
+        else if (where === 'behind-group') sk.z = Math.max(1, sheetState.group.z - 1);
+        renderSheet(); scheduleAutosave();
+    }
+
+    /* ---- 배치 도구 ---- */
+    function fitCanvasToContent() {
+        const G = sheetState.group, cells = visibleCells();
+        const cols = Math.min(G.cols, Math.max(cells.length, 1));
+        const rows = Math.max(1, Math.ceil(cells.length / cols));
+        const gw = cols * G.size + (cols - 1) * G.gap;
+        const gh = rows * G.size + (rows - 1) * G.gap;
+
+        let right = G.x + gw, bottom = G.y + gh;
+        if (sheetState.name.show) { right = Math.max(right, sheetState.name.x + 320); bottom = Math.max(bottom, sheetState.name.y + 70); }
+        if (sheetState.stats.show) {
+            right = Math.max(right, sheetState.stats.x + sheetState.stats.cellW * 3 + 16);
+            bottom = Math.max(bottom, sheetState.stats.y + 190);
+        }
+        sheetState.stickers.forEach(s => { right = Math.max(right, s.x + s.w); bottom = Math.max(bottom, s.y + s.w); });
+
+        sheetState.canvas.w = Math.min(4000, Math.max(320, Math.round(right + 48)));
+        sheetState.canvas.h = Math.min(4000, Math.max(240, Math.round(bottom + 48)));
+        $('cv-w').value = sheetState.canvas.w;
+        $('cv-h').value = sheetState.canvas.h;
+        renderSheet(); scheduleAutosave();
+        showToast('내용에 맞춰 캔버스를 정리했습니다.');
+    }
+
+    function resetLayout() {
+        if (!confirm('개체 위치와 캔버스 크기를 기본값으로 되돌릴까요?\n(표정 컷과 스티커 이미지는 유지됩니다)')) return;
+        const keepStickers = sheetState.stickers;
+        const keepValues = sheetState.stats.values;
+        const keepText = { name: sheetState.name.text, sub: sheetState.name.sub, vt: sheetState.vertical.text };
+        sheetState = defaultSheetState();
+        sheetState.stickers = keepStickers.map((s, i) => Object.assign({}, s, { x: 40 + i * 24, y: 360, angle: 0 }));
+        sheetState.stats.values = keepValues;
+        sheetState.name.text = keepText.name;
+        sheetState.name.sub = keepText.sub;
+        sheetState.vertical.text = keepText.vt;
+        syncSheetInputs();
+        renderSheet(); scheduleAutosave();
+        showToast('배치를 초기화했습니다.');
+    }
+
+    function pullThemeColors() {
+        const cs = getComputedStyle(document.body);
+        const light = document.body.classList.contains('light-mode');
+        sheetState.canvas.bg = rgbToHex(cs.getPropertyValue('--bg-card')) || (light ? '#ffffff' : '#1e1e1e');
+        sheetState.canvas.bg2 = rgbToHex(cs.getPropertyValue('--bg-deep')) || (light ? '#f5f5f7' : '#121212');
+        const fg = rgbToHex(cs.getPropertyValue('--text-main')) || (light ? '#1e293b' : '#f5f5f5');
+        sheetState.name.color = fg;
+        sheetState.vertical.color = fg;
+        sheetState.stats.color = fg;
+        sheetState.group.labelColor = light ? '#1e293b' : '#ffffff';
+        syncSheetInputs();
+        renderSheet(); scheduleAutosave();
+        showToast('현재 테마 색을 시트에 적용했습니다.');
+    }
+
+    /* ---- 입력칸 <-> 상태 ---- */
+    function syncSheetInputs() {
+        const S = sheetState;
+        $('cv-w').value = S.canvas.w; $('cv-h').value = S.canvas.h;
+        $('cv-bg').value = S.canvas.bg; $('cv-bg2').value = S.canvas.bg2;
+        $('cv-font').value = S.canvas.font;
+        $('cv-angle').value = S.canvas.angle; $('cv-angle-val').textContent = S.canvas.angle + '°';
+        $('cv-stop1').value = S.canvas.stop1; $('cv-stop1-val').textContent = S.canvas.stop1 + '%';
+        $('cv-stop2').value = S.canvas.stop2; $('cv-stop2-val').textContent = S.canvas.stop2 + '%';
+        document.querySelectorAll('#cv-bgmode-row .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === S.canvas.bgMode));
+        const isGrad = S.canvas.bgMode === 'gradient';
+        $('cv-grad-box').hidden = !isGrad;
+        $('cv-bg2-field').hidden = !isGrad;
+        $('cv-bg-label').textContent = isGrad ? '시작 색' : '배경색';
+        updateGradPreview();
+
+        $('gp-cellbg').value = S.group.cellBg;
+        $('gp-strokecolor').value = S.group.strokeColor;
+        $('gp-strokew').value = S.group.strokeW; $('gp-strokew-val').textContent = S.group.strokeW + 'px';
+        $('gp-radius').value = S.group.radius; $('gp-radius-val').textContent = S.group.radius + 'px';
+        $('gp-gap').value = S.group.gap; $('gp-gap-val').textContent = S.group.gap + 'px';
+        $('gp-opacity').value = S.group.opacity; $('gp-opacity-val').textContent = S.group.opacity + '%';
+        $('gp-labelshow').checked = S.group.labelShow;
+        $('gp-labelstyle').value = S.group.labelStyle;
+        $('gp-labelweight').value = S.group.labelWeight;
+        $('gp-labelsize').value = S.group.labelSize; $('gp-labelcolor').value = S.group.labelColor;
+        document.querySelectorAll('#gp-mode-row .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === S.group.cellMode));
+        $('gp-bg-field').style.visibility = (S.group.cellMode === 'fill') ? '' : 'hidden';
+
+        $('nm-show').checked = S.name.show; $('nm-text').value = S.name.text; $('nm-sub').value = S.name.sub;
+        $('nm-size').value = S.name.size; $('nm-subsize').value = S.name.subSize;
+        $('nm-weight').value = S.name.weight; $('nm-subweight').value = S.name.subWeight;
+        $('nm-color').value = S.name.color; $('nm-subcolor').value = S.name.subColor;
+
+        $('vt-show').checked = S.vertical.show; $('vt-text').value = S.vertical.text;
+        $('vt-size').value = S.vertical.size; $('vt-weight').value = S.vertical.weight;
+        $('vt-color').value = S.vertical.color;
+        $('vt-pos').value = S.vertical.pos; $('vt-pos-val').textContent = S.vertical.pos + '%';
+
+        $('st-show').checked = S.stats.show; $('st-mode').value = S.stats.mode;
+        $('st-size').value = S.stats.size; $('st-weight').value = S.stats.weight;
+        $('st-color').value = S.stats.color;
+        $('st-bg').value = S.stats.bg; $('st-bgalpha').value = S.stats.bgAlpha;
+        $('st-bgalpha-val').textContent = S.stats.bgAlpha + '%';
+        $('st-cellw').value = S.stats.cellW;
+
+        syncStickerControls();
+    }
+
+    const SHEET_BINDINGS = [
+        ['cv-w', v => sheetState.canvas.w = clamp(parseInt(v) || 1200, 200, 4000)],
+        ['cv-h', v => sheetState.canvas.h = clamp(parseInt(v) || 800, 200, 4000)],
+        ['cv-bg', v => { sheetState.canvas.bg = v; updateGradPreview(); }],
+        ['cv-bg2', v => { sheetState.canvas.bg2 = v; updateGradPreview(); }],
+        ['cv-angle', v => { sheetState.canvas.angle = parseInt(v); $('cv-angle-val').textContent = v + '°'; updateGradPreview(); }],
+        ['cv-stop1', v => { sheetState.canvas.stop1 = parseInt(v); $('cv-stop1-val').textContent = v + '%'; updateGradPreview(); }],
+        ['cv-stop2', v => { sheetState.canvas.stop2 = parseInt(v); $('cv-stop2-val').textContent = v + '%'; updateGradPreview(); }],
+        ['cv-font', v => sheetState.canvas.font = FONTS[v] ? v : 'sans'],
+
+        ['gp-cellbg', v => sheetState.group.cellBg = v],
+        ['gp-strokecolor', v => sheetState.group.strokeColor = v],
+        ['gp-strokew', v => { sheetState.group.strokeW = parseInt(v); $('gp-strokew-val').textContent = v + 'px'; }],
+        ['gp-radius', v => { sheetState.group.radius = parseInt(v); $('gp-radius-val').textContent = v + 'px'; }],
+        ['gp-gap', v => { sheetState.group.gap = parseInt(v); $('gp-gap-val').textContent = v + 'px'; }],
+        ['gp-opacity', v => { sheetState.group.opacity = parseInt(v); $('gp-opacity-val').textContent = v + '%'; }],
+        ['gp-labelshow', (v, el) => sheetState.group.labelShow = el.checked],
+        ['gp-labelstyle', v => sheetState.group.labelStyle = v],
+        ['gp-labelweight', v => sheetState.group.labelWeight = parseInt(v)],
+        ['gp-labelsize', v => sheetState.group.labelSize = clamp(parseInt(v) || 14, 6, 48)],
+        ['gp-labelcolor', v => sheetState.group.labelColor = v],
+
+        ['nm-show', (v, el) => sheetState.name.show = el.checked],
+        ['nm-text', v => sheetState.name.text = v],
+        ['nm-sub', v => sheetState.name.sub = v],
+        ['nm-size', v => sheetState.name.size = clamp(parseInt(v) || 34, 8, 140)],
+        ['nm-subsize', v => sheetState.name.subSize = clamp(parseInt(v) || 15, 6, 80)],
+        ['nm-weight', v => sheetState.name.weight = parseInt(v)],
+        ['nm-subweight', v => sheetState.name.subWeight = parseInt(v)],
+        ['nm-color', v => sheetState.name.color = v],
+        ['nm-subcolor', v => sheetState.name.subColor = v],
+
+        ['vt-show', (v, el) => sheetState.vertical.show = el.checked],
+        ['vt-text', v => sheetState.vertical.text = v],
+        ['vt-size', v => sheetState.vertical.size = clamp(parseInt(v) || 20, 8, 80)],
+        ['vt-weight', v => sheetState.vertical.weight = parseInt(v)],
+        ['vt-color', v => sheetState.vertical.color = v],
+        ['vt-pos', v => { sheetState.vertical.pos = parseInt(v); $('vt-pos-val').textContent = v + '%'; }],
+
+        ['st-show', (v, el) => sheetState.stats.show = el.checked],
+        ['st-mode', v => sheetState.stats.mode = v],
+        ['st-size', v => sheetState.stats.size = clamp(parseInt(v) || 13, 6, 40)],
+        ['st-weight', v => sheetState.stats.weight = parseInt(v)],
+        ['st-color', v => sheetState.stats.color = v],
+        ['st-bg', v => sheetState.stats.bg = v],
+        ['st-bgalpha', v => { sheetState.stats.bgAlpha = parseInt(v); $('st-bgalpha-val').textContent = v + '%'; }],
+        ['st-cellw', v => sheetState.stats.cellW = clamp(parseInt(v) || 104, 50, 260)],
+
+        ['sk-w', v => { const s = currentSticker(); if (s) s.w = clamp(parseInt(v) || 100, 20, 3000); }],
+        ['sk-angle', v => { const s = currentSticker(); if (s) s.angle = clamp(parseInt(v) || 0, -180, 180); }],
+        ['sk-opacity', v => { const s = currentSticker(); if (s) s.opacity = parseInt(v); $('sk-opacity-val').textContent = v + '%'; }]
+    ];
+
+    SHEET_BINDINGS.forEach(([id, apply]) => {
+        const el = $(id);
+        if (!el) return;
+        const evt = (el.type === 'checkbox' || el.tagName === 'SELECT') ? 'change' : 'input';
+        el.addEventListener(evt, () => { apply(el.value, el); renderSheet(); scheduleAutosave(); });
+    });
+
+    /* ---- 저장 ---- */
+    async function exportPNG(scale) {
+        if (!cellsData.length && !sheetState.stickers.length) { showToast('먼저 표정 컷이나 스티커를 넣어주세요.'); return; }
+        const cv = $('sheet-canvas');
+        // 이름·특성치 칸에 커서가 남아 있으면 포커스 점선이 그림에 함께 찍힙니다.
+        if (document.activeElement && cv.contains(document.activeElement)) document.activeElement.blur();
+        const sel = window.getSelection && window.getSelection();
+        if (sel && sel.removeAllRanges) sel.removeAllRanges();
+
+        const prevTransform = cv.style.transform;
+        cv.style.transform = 'none';
+        cv.classList.add('capturing');
+        document.querySelectorAll('#sheet-canvas .sheet-obj').forEach(el => el.classList.remove('obj-selected'));
+
+        const restore = () => { cv.style.transform = prevTransform; cv.classList.remove('capturing'); selectObject(selectedObj); };
+
+        try {
+            const out = await html2canvas(cv, {
+                scale, useCORS: true, backgroundColor: null, logging: false,
+                width: sheetState.canvas.w, height: sheetState.canvas.h,
+                windowWidth: sheetState.canvas.w, windowHeight: sheetState.canvas.h
+            });
+            out.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const base = (sheetState.name.text.trim() || $('character-name').value.trim() || 'standing-sheet').replace(/\s+/g, '_');
+                a.download = `${base}_${scale}x.png`;
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 4000);
+                showToast(`PNG ${scale}× 저장 완료`);
+            }, 'image/png');
+        } catch (e) {
+            alert('저장 중 오류가 발생했습니다: ' + (e && e.message ? e.message : e));
+        } finally {
+            restore();
+        }
+    }
+
+    window.addEventListener('resize', updateStageScale);
+
+    ['character-name', 'quality-level', 'label-method', 'crop-ratio', 'column-count'].forEach(id => {
+        $(id).addEventListener('input', scheduleAutosave);
+    });
+
+
+    /* ---------------- 자동 저장 ---------------- */
+    function setAutosaveStatus(text, live) {
+        $('autosave-status').innerHTML = (live ? '<span class="dot-pulse"></span>' : '') + text;
+    }
+
+    function timeStr(d) {
+        return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+    }
+
+    function toggleAutosave() {
+        autosaveEnabled = $('autosave-toggle').checked;
+        localStorage.setItem('sheetmaker_autosave', autosaveEnabled ? '1' : '0');
+        if (autosaveEnabled) {
+            setAutosaveStatus('켜짐 — 변경 시 자동으로 저장됩니다');
+            scheduleAutosave();
+        } else {
+            clearTimeout(autosaveTimer);
+            setAutosaveStatus('꺼짐 — 직접 저장해야 합니다');
+        }
+    }
+
+    function scheduleAutosave() {
+        if (!appReady || !autosaveEnabled) return;
+        setAutosaveStatus('변경됨 — 곧 저장', true);
+        clearTimeout(autosaveTimer);
+        autosaveTimer = setTimeout(runAutosave, 1200);
+    }
+
+    async function runAutosave() {
+        if (!autosaveEnabled) return;
+        try {
+            await idbPut(S_DRAFT, {
+                id: 'current',
+                name: $('character-name').value.trim(),
+                cells: cellsData,
+                settings: collectSettings(),
+                savedAt: Date.now()
+            });
+            setAutosaveStatus(`자동 저장됨 · ${timeStr(new Date())}`);
+            updateStorageIndicator();
+        } catch (e) {
+            setAutosaveStatus('자동 저장 실패 — 용량을 확인하세요');
+        }
+    }
+
+    // 탭을 닫거나 숨길 때 대기 중인 변경분을 흘려보내지 않도록 즉시 기록
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden' && autosaveEnabled && appReady) {
+            clearTimeout(autosaveTimer);
+            runAutosave();
+        }
+    });
+
+    function openRestoreModal() {
+        idbGet(S_DRAFT, 'current').then(draft => {
+            if (!draft || !draft.cells || !draft.cells.length) {
+                return showToast('자동 저장된 작업이 없습니다.');
+            }
+            pendingDraft = draft;
+            showRestorePrompt(draft);
+        }).catch(() => showToast('저장소를 읽을 수 없습니다.'));
+    }
+
+    function showRestorePrompt(draft) {
+        const when = new Date(draft.savedAt);
+        const label = draft.name ? `<b>${escapeHtml(draft.name)}</b>` : '<b>이름 없는 작업</b>';
+        $('restore-body').innerHTML =
+            `${label} · 표정 컷 ${draft.cells.length}장<br>
+             마지막 저장 ${when.getFullYear()}.${String(when.getMonth() + 1).padStart(2, '0')}.${String(when.getDate()).padStart(2, '0')} ${timeStr(when)}<br><br>
+             이어서 작업하시겠습니까?`;
+        $('restore-modal').style.display = 'flex';
+    }
+
+    function applyRestore() {
+        if (pendingDraft) {
+            applyRecord(pendingDraft);
+            showToast('자동 저장된 작업을 불러왔습니다.');
+        }
+        $('restore-modal').style.display = 'none';
+        pendingDraft = null;
+    }
+
+    function dismissRestore() {
+        $('restore-modal').style.display = 'none';
+        pendingDraft = null;
+    }
+
+    /* ---------------- 캐릭터 DB ---------------- */
+    function collectSettings() {
+        return {
+            cropRatio, quality: $('quality-level').value, labelMethod: $('label-method').value,
+            columns: $('column-count').value, sheet: JSON.parse(JSON.stringify(sheetState))
+        };
+    }
+
+    // 저장본에 없던 항목이 생겨도 기본값 위에 덮어쓰는 방식으로 합쳐, 예전 저장본이 깨지지 않게 합니다.
+    function mergeSheetState(saved) {
+        const base = defaultSheetState();
+        if (!saved || typeof saved !== 'object') return base;
+        ['canvas', 'group', 'name', 'vertical', 'stats'].forEach(k => {
+            if (saved[k] && typeof saved[k] === 'object') base[k] = Object.assign(base[k], saved[k]);
+        });
+        if (base.stats && typeof base.stats.values !== 'object') base.stats.values = {};
+        // 라벨 스타일은 두 가지만 남았습니다. 예전 저장본의 값은 '폰트 + 획'으로 받습니다.
+        if (base.group.labelStyle !== 'pill') base.group.labelStyle = 'outline';
+        // 라벨 위치 선택은 사라졌고, 예전의 '표시 안 함'은 표시 끄기로 옮겨 왔습니다.
+        if (saved.group && saved.group.labelPos === 'none') base.group.labelShow = false;
+        if (typeof base.group.labelShow !== 'boolean') base.group.labelShow = true;
+        if (base.group.cellMode !== 'stroke') base.group.cellMode = 'fill';
+        // 예전 6종 값(sans-kr/sans-jp/serif-jp …)은 고딕/명조 두 갈래로 접습니다.
+        if (!FONTS[base.canvas.font]) {
+            base.canvas.font = String(base.canvas.font || '').startsWith('serif') ? 'serif' : 'sans';
+        }
+        if (base.canvas.bgMode !== 'gradient') base.canvas.bgMode = 'solid';
+        base.stickers = Array.isArray(saved.stickers) ? saved.stickers.filter(s => s && s.src) : [];
+        return base;
+    }
+
+    function applyRecord(rec) {
+        cellsData = rec.cells || [];
+        const s = rec.settings || {};
+        if (s.cropRatio) { cropRatio = s.cropRatio; $('crop-ratio').value = s.cropRatio; }
+        if (s.quality) $('quality-level').value = s.quality;
+        if (s.labelMethod) $('label-method').value = s.labelMethod;
+        if (s.columns) { $('column-count').value = s.columns; changeColumnCount(false); }
+
+        sheetState = mergeSheetState(s.sheet);
+        zCounter = sheetState.stickers.reduce((m, sk) => Math.max(m, sk.z || 0), 40);
+        selectedStickerId = sheetState.stickers.length ? sheetState.stickers[0].id : null;
+
+        if (rec.name !== undefined) $('character-name').value = rec.name || '';
+        selectedFiles = [];
+        syncSheetInputs();
+        renderPreviews();
+        renderCells();
+        renderSheet();
+    }
+
+    async function saveCharacter() {
+        const name = $('character-name').value.trim();
+        if (!name) return alert('캐릭터 이름을 입력해주세요.');
+        try {
+            await idbPut(S_CHAR, { name, cells: cellsData, settings: collectSettings(), savedAt: Date.now() });
+            await updateCharacterList();
+            updateStorageIndicator();
+            showToast(`'${name}' 캐릭터가 저장되었습니다.`);
+        } catch (e) {
+            alert('저장에 실패했습니다: ' + (e && e.message ? e.message : e));
+        }
+    }
+
+    async function listCharacters() {
+        try {
+            const all = await idbAll(S_CHAR);
+            return all.map(r => r.name).sort((a, b) => a.localeCompare(b, 'ko-KR', { sensitivity: 'base' }));
+        } catch (e) { return []; }
+    }
+
+    async function updateCharacterList() {
+        const select = $('saved-character-list');
+        const current = select.value;
+        select.innerHTML = '<option value="">-- 캐릭터 불러오기 --</option>';
+        (await listCharacters()).forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name; opt.textContent = name;
+            select.appendChild(opt);
+        });
+        select.value = current;
+    }
+
+    async function loadCharacter() {
+        const name = $('saved-character-list').value;
+        if (!name) return;
+        try {
+            const rec = await idbGet(S_CHAR, name);
+            if (!rec) return;
+            applyRecord(rec);
+            showToast(`'${name}' 데이터를 불러왔습니다.`);
+            scheduleAutosave();
+        } catch (e) {
+            alert('데이터를 읽는 중 오류가 발생했습니다.');
+        }
+    }
+
+    function clearWorkspace() {
+        cellsData = []; selectedFiles = []; lastCropData = null;
+        sheetState = defaultSheetState();
+        selectedStickerId = null;
+        syncSheetInputs();
+        renderCells(); renderPreviews(); renderSheet();
+    }
+
+    function newCharacter() {
+        if (confirm('현재 작업을 비우고 새로 만드시겠습니까?\n(자동 저장 기록도 함께 지워집니다)')) {
+            clearWorkspace();
+            $('character-name').value = '';
+            idbDel(S_DRAFT, 'current').then(updateStorageIndicator);
+            setAutosaveStatus(autosaveEnabled ? '켜짐 — 변경 시 자동으로 저장됩니다' : '꺼짐');
+            showToast('새 캔버스가 준비되었습니다.');
+        }
+    }
+
+    function resetAll() {
+        if (confirm('전체 설정을 초기화하시겠습니까?\n(저장된 캐릭터는 지워지지 않고, 현재 작업만 비워집니다)')) {
+            clearWorkspace();
+            $('character-name').value = '';
+            idbDel(S_DRAFT, 'current').then(updateStorageIndicator);
+            showToast('앱이 초기화되었습니다.');
+        }
+    }
+
+    /* ---------------- 일괄 관리 / 백업 ---------------- */
+    async function openManageModal() {
+        const listDiv = $('manage-list');
+        listDiv.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:20px;">불러오는 중…</div>';
+        $('manage-modal').style.display = 'flex';
+
+        const names = await listCharacters();
+        listDiv.innerHTML = '';
+        if (!names.length) {
+            listDiv.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:20px;">저장된 캐릭터가 없습니다.</div>';
+        } else {
+            names.forEach((name, i) => {
+                listDiv.innerHTML += `
+                    <div style="display:flex; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-color);">
+                        <input type="checkbox" class="manage-chk" value="${escapeHtml(name)}" id="chk_${i}" style="margin-right:10px;">
+                        <label for="chk_${i}" style="cursor:pointer; color:var(--text-main); font-size:14px; flex:1;">${escapeHtml(name)}</label>
+                    </div>`;
+            });
+        }
+        $('manage-select-all').checked = false;
+    }
+
+    function toggleSelectAllManage(isChecked) {
+        document.querySelectorAll('#manage-list .manage-chk').forEach(chk => chk.checked = isChecked);
+    }
+
+    function downloadJSON(obj, filename) {
+        const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }
+
+    async function exportSelectedCharacters() {
+        const checked = Array.from(document.querySelectorAll('#manage-list .manage-chk:checked'));
+        if (!checked.length) return alert('백업할 캐릭터를 선택해주세요.');
+        const records = [];
+        for (const chk of checked) {
+            const rec = await idbGet(S_CHAR, chk.value);
+            if (rec) records.push(rec);
+        }
+        downloadJSON({ format: 'standing-sheet-maker', version: 1, records }, `sheet_backup_${records.length}EA.json`);
+        showToast(`${records.length}개의 캐릭터가 백업되었습니다.`);
+    }
+
+    async function deleteSelectedCharacters() {
+        const checked = Array.from(document.querySelectorAll('#manage-list .manage-chk:checked'));
+        if (!checked.length) return alert('삭제할 캐릭터를 선택해주세요.');
+        if (!confirm(`선택한 ${checked.length}개의 캐릭터를 정말 삭제하시겠습니까?\n(복구할 수 없으므로 미리 백업을 권장합니다)`)) return;
+
+        const currentName = $('character-name').value;
+        let removedCurrent = false;
+        for (const chk of checked) {
+            await idbDel(S_CHAR, chk.value);
+            if (chk.value === currentName) removedCurrent = true;
+        }
+        if (removedCurrent) { cellsData = []; renderCells(); $('character-name').value = ''; }
+        await updateCharacterList();
+        updateStorageIndicator();
+        openManageModal();
+        showToast('선택한 캐릭터가 삭제되었습니다.');
+    }
+
+    async function exportDatabase() {
+        const records = await idbAll(S_CHAR);
+        if (!records.length) return alert('내보낼 캐릭터 데이터가 없습니다.');
+        downloadJSON({ format: 'standing-sheet-maker', version: 1, records }, 'sheet_DB_backup.json');
+        showToast('전체 데이터 파일이 내보내졌습니다.');
+    }
+
+    function importDatabase(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async e => {
+            try {
+                const parsed = JSON.parse(e.target.result);
+                let records = [];
+
+                if (parsed && Array.isArray(parsed.records)) {
+                    records = parsed.records;
+                } else if (parsed && typeof parsed === 'object') {
+                    // 예전 localStorage 형식(키: sheet_이름, 값: JSON 문자열)도 받아준다
+                    for (const key in parsed) {
+                        if (!key.startsWith(LEGACY_PREFIX)) continue;
+                        try {
+                            const data = JSON.parse(parsed[key]);
+                            records.push({ name: key.slice(LEGACY_PREFIX.length), cells: data.cells || [], settings: data.settings || {}, savedAt: Date.now() });
+                        } catch (err) {}
+                    }
+                }
+
+                if (!records.length) { alert('올바른 백업 파일 형식이 아닙니다.'); input.value = ''; return; }
+
+                let count = 0;
+                for (const rec of records) {
+                    if (!rec || !rec.name) continue;
+                    await idbPut(S_CHAR, { name: rec.name, cells: rec.cells || [], settings: rec.settings || {}, savedAt: rec.savedAt || Date.now() });
+                    count++;
+                }
+                await updateCharacterList();
+                updateStorageIndicator();
+                showToast(`${count}개의 캐릭터 복구 완료!`);
+            } catch (err) {
+                alert('파일을 읽는 중 오류가 발생했습니다: ' + err.message);
+            }
+            input.value = '';
+        };
+        reader.readAsText(file);
+    }
+
+    /* 예전 localStorage 데이터를 전용 DB로 옮기고 localStorage 자리를 비운다 */
+    async function migrateLegacy() {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith(LEGACY_PREFIX)) keys.push(k);
+        }
+        if (!keys.length) return 0;
+
+        let moved = 0;
+        for (const k of keys) {
+            try {
+                const data = JSON.parse(localStorage.getItem(k));
+                const name = k.slice(LEGACY_PREFIX.length);
+                if (!(await idbGet(S_CHAR, name))) {
+                    await idbPut(S_CHAR, { name, cells: data.cells || [], settings: data.settings || {}, savedAt: Date.now() });
+                    moved++;
+                }
+                localStorage.removeItem(k);
+            } catch (e) {}
+        }
+        return moved;
+    }
+
+    /* ---------------- 모달 / 토스트 ---------------- */
+    function openHelpModal() { $('help-modal').style.display = 'flex'; }
+    function closeHelpModal() { $('help-modal').style.display = 'none'; }
+
+    window.addEventListener('keydown', e => {
+        const cropperModal = $('cropper-modal'), helpModal = $('help-modal');
+        const welcome = $('welcome-overlay'), manage = $('manage-modal'), restore = $('restore-modal');
+        if (cropperModal.style.display === 'flex') {
+            if (e.key === 'Enter') { e.preventDefault(); saveCrop(); }
+            else if (e.key === 'Escape') { e.preventDefault(); closeCropper(); }
+        } else if (restore.style.display === 'flex') {
+            if (e.key === 'Enter') { e.preventDefault(); applyRestore(); }
+            else if (e.key === 'Escape') { e.preventDefault(); dismissRestore(); }
+        } else if (helpModal.style.display === 'flex') {
+            if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); closeHelpModal(); }
+        } else if (welcome.style.display === 'flex') {
+            if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); welcome.style.display = 'none'; }
+        } else if (manage.style.display === 'flex') {
+            if (e.key === 'Escape') { e.preventDefault(); manage.style.display = 'none'; }
+        }
+    });
+
+    let toastTimer = null;
+    function showToast(msg) {
+        const box = $('alert-box');
+        box.innerText = msg;
+        box.style.display = 'block';
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { box.style.display = 'none'; }, 2000);
+    }
+
+    function copyText(text) {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => showToast(`'${text}' 복사됨`)).catch(() => {});
+        }
+    }
+
+    /* ---------------- 초기화 ---------------- */
+    document.addEventListener('DOMContentLoaded', async () => {
+        const savedCols = localStorage.getItem('sheetmaker_layout_columns');
+        if (savedCols) { $('column-count').value = savedCols; }
+        changeColumnCount(false);
+
+        const savedMode = localStorage.getItem('sheetmaker_screen_mode');
+        if (savedMode) setScreenMode(savedMode, false);
+
+        const themeType = localStorage.getItem('sheetmaker_theme_type');
+        if (themeType === 'preset') {
+            const tName = localStorage.getItem('sheetmaker_theme_name');
+            const dot = document.querySelector(`.theme-dot[data-theme="${tName}"]`);
+            if (dot) setTheme(tName, dot, false);
+        } else if (themeType === 'custom') {
+            const tColor = localStorage.getItem('sheetmaker_theme_color');
+            if (tColor) { $('custom-theme-color').value = tColor; setCustomTheme(tColor, false); }
+        }
+
+        autosaveEnabled = localStorage.getItem('sheetmaker_autosave') !== '0';
+        $('autosave-toggle').checked = autosaveEnabled;
+        setAutosaveStatus(autosaveEnabled ? '켜짐 — 변경 시 자동으로 저장됩니다' : '꺼짐 — 직접 저장해야 합니다');
+
+        syncSheetInputs();
+        renderCells();
+        renderSheet();
+
+        try {
+            await openDB();
+        } catch (e) {
+            setAutosaveStatus('저장소를 열 수 없습니다 (시크릿 모드?)');
+            $('storage-note').innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> 브라우저가 저장소를 막고 있어 저장 기능을 쓸 수 없습니다.';
+            return;
+        }
+
+        const moved = await migrateLegacy();
+        await updateCharacterList();
+        updateStorageIndicator();
+        if (moved) showToast(`기존 캐릭터 ${moved}개를 전용 저장소로 옮겼습니다.`);
+
+        // 자동 저장 기록이 남아 있으면 이어서 작업할지 물어본다
+        try {
+            const draft = await idbGet(S_DRAFT, 'current');
+            if (draft && draft.cells && draft.cells.length) {
+                pendingDraft = draft;
+                $('welcome-overlay').style.display = 'none';
+                showRestorePrompt(draft);
+            }
+        } catch (e) {}
+
+        appReady = true;
+    });
+</script>
+</body>
+</html>
