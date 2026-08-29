@@ -406,6 +406,14 @@
         cursor: nwse-resize; z-index: 5; opacity: 0; transition: opacity .15s;
     }
     .sheet-group:hover .grp-resize, .sheet-group.obj-selected .grp-resize { opacity: 1; }
+    .snap-guide-v, .snap-guide-h {
+        position: absolute; background: #ec4899; pointer-events: none; z-index: 9999;
+        box-shadow: 0 0 6px rgba(236,72,153,.75);
+    }
+    .snap-guide-v { top: 0; bottom: 0; width: 1px; }
+    .snap-guide-h { left: 0; right: 0; height: 1px; }
+    .capturing .snap-guide-v, .capturing .snap-guide-h { display: none !important; }
+
     .grp-cols {
         position: absolute; right: -9px; top: 50%; margin-top: -14px; width: 14px; height: 28px;
         background: var(--accent); border: 2px solid var(--bg-card); border-radius: 4px;
@@ -849,6 +857,8 @@
                 <div class="card-title" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                     <span><i class="fa-solid fa-grip"></i> 표정 컷 <span id="cell-count-badge" style="color: var(--accent); font-weight:700;">0</span></span>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="tool-btn" onclick="setAllCellsVisible(true)"><i class="fa-solid fa-eye"></i> 전부 켜기</button>
+                        <button class="tool-btn" onclick="setAllCellsVisible(false)"><i class="fa-solid fa-eye-slash"></i> 전부 끄기</button>
                         <button class="tool-btn" onclick="sortCellsByName()"><i class="fa-solid fa-arrow-down-a-z"></i> 이름순 정렬</button>
                         <button class="tool-btn" id="edit-mode-btn" onclick="toggleEditMode()"><i class="fa-solid fa-pen"></i> 이름 수정 모드</button>
                         <button class="tool-btn accent" onclick="applyGlobalCrop()"><i class="fa-solid fa-crop-simple"></i> 일괄 크롭 적용</button>
@@ -862,8 +872,11 @@
                     <span><i class="fa-solid fa-object-group"></i> 시트 캔버스</span>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
                         <label class="tool-btn" style="margin:0;"><i class="fa-solid fa-person"></i> 스티커 추가<input type="file" accept="image/*" multiple style="display:none;" onchange="addStickers(event)"></label>
+                        <button class="tool-btn accent" id="snap-btn" onclick="toggleSnap()"><i class="fa-solid fa-magnet"></i> 자석 정렬</button>
+                        <button class="tool-btn" onclick="centerSelected('h')" title="선택한 개체를 가로 가운데로"><i class="fa-solid fa-arrows-left-right"></i> 가로 중앙</button>
+                        <button class="tool-btn" onclick="centerSelected('v')" title="선택한 개체를 세로 가운데로"><i class="fa-solid fa-arrows-up-down"></i> 세로 중앙</button>
                         <button class="tool-btn" onclick="fitCanvasToContent()"><i class="fa-solid fa-compress"></i> 여백 맞추기</button>
-                        <button class="tool-btn accent" onclick="resetLayout()"><i class="fa-solid fa-rotate"></i> 배치 초기화</button>
+                        <button class="tool-btn" onclick="resetLayout()"><i class="fa-solid fa-rotate"></i> 배치 초기화</button>
                     </div>
                 </div>
                 <p class="panel-hint">개체를 드래그해 옮기고, 클릭하면 아래에서 세부 설정을 바꿀 수 있어요.</p>
@@ -1034,10 +1047,14 @@
             <li>카드를 드래그해 순서를 바꾸면 <b>시트에 배치되는 순서</b>가 그대로 바뀝니다.</li>
             <li><b>[이름 수정 모드]</b>를 켜면 카드를 눌러 라벨을 직접 바꿀 수 있습니다.</li>
             <li>이름 생성 방식을 <b>순번</b>으로 두면 01, 02… 형태로 자동 매겨집니다.</li>
+            <li>카드의 <i class="fa-solid fa-eye"></i> 아이콘으로 시트에 넣을 컷을 고릅니다. 지우는 게 아니라서 언제든 다시 켤 수 있고, <b>[전부 켜기 / 전부 끄기]</b>로 한 번에 바꿀 수도 있습니다.</li>
         </ul>
         <h3><i class="fa-solid fa-sliders"></i> 시트 조판과 저장</h3>
         <ul>
-            <li>셀 크기·간격·모서리·열 수, 배경/텍스트 색, 라벨 위치와 스타일을 조절할 수 있습니다.</li>
+            <li>표정 <b>크기</b>는 그룹 모서리를, <b>열 수</b>는 오른쪽 가운데 손잡이를 끌어 조절합니다.</li>
+            <li>이름 &middot; 세로 텍스트 &middot; 특성치 &middot; 스티커는 캔버스에서 자유롭게 끌어 옮길 수 있습니다.</li>
+            <li><b>[자석 정렬]</b>이 켜져 있으면 캔버스의 가장자리 &middot; 중앙선과 다른 개체의 가장자리 &middot; 중앙에 자동으로 달라붙고, 분홍 선으로 어디에 맞았는지 보여줍니다. 정확히 가운데로 보내려면 <b>[가로 중앙]</b> &middot; <b>[세로 중앙]</b>을 쓰세요.</li>
+            <li>칸 모양은 <b>배경 채움</b>과 <b>획만</b> 중에 고르고, 시트 배경은 단색 또는 그라데이션으로 지정합니다.</li>
             <li><b>[현재 테마 색 가져오기]</b>를 누르면 지금 화면 테마가 시트 색으로 들어옵니다.</li>
             <li>PNG는 1× / 2× / 4×로 저장됩니다. 4×로 뽑을 거면 <b>저장 화질을 768px</b>로 올려두세요.</li>
         </ul>
@@ -1422,6 +1439,15 @@
         renderCells();
     }
 
+    function setAllCellsVisible(show) {
+        if (!cellsData.length) return;
+        cellsData.forEach(item => { item.visible = show; });
+        renderCells();
+        renderSheet();
+        scheduleAutosave();
+        showToast(show ? `표정 ${cellsData.length}컷을 모두 켰습니다.` : '표정을 모두 껐습니다.');
+    }
+
     function toggleCellVisible(event, id) {
         event.stopPropagation();
         const item = cellsData.find(i => String(i.id) === String(id));
@@ -1441,7 +1467,10 @@
     function renderCells() {
         const container = $('cell-container');
         container.innerHTML = '';
-        $('cell-count-badge').textContent = cellsData.length;
+        const shownCount = cellsData.filter(c => c.visible !== false).length;
+        $('cell-count-badge').textContent = cellsData.length
+            ? (shownCount === cellsData.length ? cellsData.length : `${shownCount}/${cellsData.length}`)
+            : 0;
 
         if (!cellsData.length) {
             container.innerHTML = `<div class="empty-state"><i class="fa-regular fa-face-smile"></i>아직 표정 컷이 없습니다.<br>왼쪽에서 이미지를 업로드해 시작하세요.</div>`;
@@ -1610,6 +1639,92 @@
         selectObject(kind);
     }
 
+    /* ---- 자석 스냅 ----
+       캔버스의 가장자리·중앙선, 그리고 이미 놓인 다른 개체의 가장자리·중앙에 달라붙습니다.
+       끌고 있는 개체의 왼/가운데/오른(위/가운데/아래) 세 지점을 모두 후보로 재서,
+       가장 가까운 한 곳에만 붙습니다. */
+    let snapEnabled = true;
+    const SNAP_PX = 8;   // 화면 기준 거리 — 캔버스가 축소돼 있어도 손끝 감각이 같도록 배율로 나눕니다
+
+    function toggleSnap() {
+        snapEnabled = !snapEnabled;
+        $('snap-btn').classList.toggle('accent', snapEnabled);
+        localStorage.setItem('sheetmaker_snap', snapEnabled ? '1' : '0');
+        if (!snapEnabled) hideGuides();
+        showToast(snapEnabled ? '자석 정렬 켜짐' : '자석 정렬 꺼짐');
+    }
+
+    function showGuides(gx, gy) {
+        const cv = $('sheet-canvas');
+        let v = cv.querySelector('.snap-guide-v'), hz = cv.querySelector('.snap-guide-h');
+        if (!v) { v = document.createElement('div'); v.className = 'snap-guide-v'; cv.appendChild(v); }
+        if (!hz) { hz = document.createElement('div'); hz.className = 'snap-guide-h'; cv.appendChild(hz); }
+        v.style.display = (gx == null) ? 'none' : 'block';
+        if (gx != null) v.style.left = gx + 'px';
+        hz.style.display = (gy == null) ? 'none' : 'block';
+        if (gy != null) hz.style.top = gy + 'px';
+    }
+
+    function hideGuides() {
+        document.querySelectorAll('#sheet-canvas .snap-guide-v, #sheet-canvas .snap-guide-h').forEach(e => e.remove());
+    }
+
+    function snapPosition(el, x, y) {
+        if (!snapEnabled) return [x, y];
+        const W = sheetState.canvas.w, H = sheetState.canvas.h;
+        const w = el.offsetWidth, h = el.offsetHeight;
+        const T = SNAP_PX / (stageScale || 1);
+
+        const gx = [0, W / 2, W], gy = [0, H / 2, H];
+        document.querySelectorAll('#sheet-canvas .sheet-obj').forEach(o => {
+            if (o === el || o.dataset.obj === 'vertical') return;
+            const l = parseFloat(o.style.left) || 0, t = parseFloat(o.style.top) || 0;
+            gx.push(l, l + o.offsetWidth / 2, l + o.offsetWidth);
+            gy.push(t, t + o.offsetHeight / 2, t + o.offsetHeight);
+        });
+
+        let bx = null, by = null;
+        [0, w / 2, w].forEach(off => gx.forEach(g => {
+            const d = Math.abs(x + off - g);
+            if (d <= T && (!bx || d < bx.d)) bx = { d, v: g - off, g };
+        }));
+        [0, h / 2, h].forEach(off => gy.forEach(g => {
+            const d = Math.abs(y + off - g);
+            if (d <= T && (!by || d < by.d)) by = { d, v: g - off, g };
+        }));
+
+        showGuides(bx ? bx.g : null, by ? by.g : null);
+        return [bx ? bx.v : x, by ? by.v : y];
+    }
+
+    /* ---- 선택한 개체를 캔버스 가운데로 ---- */
+    function selectedObjState() {
+        if (selectedObj === 'group') return sheetState.group;
+        if (selectedObj === 'name') return sheetState.name;
+        if (selectedObj === 'stats') return sheetState.stats;
+        if (selectedObj === 'sticker') return currentSticker();
+        return null;
+    }
+
+    function selectedObjEl() {
+        if (selectedObj === 'sticker') {
+            return selectedStickerId ? document.querySelector(`#sheet-canvas .sheet-sticker[data-id="${selectedStickerId}"]`) : null;
+        }
+        return document.querySelector(`#sheet-canvas .sheet-obj[data-obj="${selectedObj}"]`);
+    }
+
+    function centerSelected(axis) {
+        const pos = selectedObjState(), el = selectedObjEl();
+        if (!pos || !el) {
+            showToast('캔버스에서 옮길 개체를 먼저 고르세요. (세로 텍스트는 왼쪽 끝 고정입니다)');
+            return;
+        }
+        if (axis === 'h') pos.x = Math.round((sheetState.canvas.w - el.offsetWidth) / 2);
+        if (axis === 'v') pos.y = Math.round((sheetState.canvas.h - el.offsetHeight) / 2);
+        renderSheet();
+        scheduleAutosave();
+    }
+
     /* ---- 드래그 ---- */
     function makeDraggable(el, get, set, kind, id) {
         el.addEventListener('pointerdown', e => {
@@ -1625,11 +1740,13 @@
                 const dx = (ev.clientX - sx) / stageScale;
                 const dy = (ev.clientY - sy) / stageScale;
                 if (Math.abs(dx) > 1 || Math.abs(dy) > 1) moved = true;
-                set(Math.round(start.x + dx), Math.round(start.y + dy));
+                const [nx, ny] = snapPosition(el, start.x + dx, start.y + dy);
+                set(Math.round(nx), Math.round(ny));
             };
             const up = () => {
                 el.removeEventListener('pointermove', move);
                 el.removeEventListener('pointerup', up);
+                hideGuides();
                 if (moved) scheduleAutosave();
             };
             el.addEventListener('pointermove', move);
@@ -2156,6 +2273,7 @@
         if (document.activeElement && cv.contains(document.activeElement)) document.activeElement.blur();
         const sel = window.getSelection && window.getSelection();
         if (sel && sel.removeAllRanges) sel.removeAllRanges();
+        hideGuides();
 
         const prevTransform = cv.style.transform;
         cv.style.transform = 'none';
@@ -2600,6 +2718,9 @@
             const tColor = localStorage.getItem('sheetmaker_theme_color');
             if (tColor) { $('custom-theme-color').value = tColor; setCustomTheme(tColor, false); }
         }
+
+        snapEnabled = localStorage.getItem('sheetmaker_snap') !== '0';
+        $('snap-btn').classList.toggle('accent', snapEnabled);
 
         autosaveEnabled = localStorage.getItem('sheetmaker_autosave') !== '0';
         $('autosave-toggle').checked = autosaveEnabled;
